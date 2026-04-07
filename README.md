@@ -18,10 +18,12 @@ The repository now includes the first end-to-end MVP pipeline in code:
 - `sync` orchestrates `extract → enrich → export` in order.
 - Raw archives live under `data/raw/` and the local SQLite database lives under `state/app.db`.
 
-The current follow-up work is Sprint 5 hardening:
-- make export fail read-only when the SQLite database is missing instead of bootstrapping state
-- escape Markdown-sensitive source text and link metadata so notes preserve source fidelity
-- rerun verification in the documented Python 3.12+ dev environment
+Sprint 5 hardening closed the first export review findings:
+- `export` now fails read-only when the SQLite database is missing or missing required schema
+- Markdown-sensitive source text and link metadata render without changing note structure
+- verification has been rerun in a Python 3.12 dev environment with `.[dev]` installed
+
+The main follow-up from here is a human Obsidian spot-check on real exported notes plus selecting the next backlog slice.
 
 ## Development Setup
 

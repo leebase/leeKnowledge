@@ -42,7 +42,7 @@
 | Sprint 2 — Extraction Slice | Phase 2 | Capture raw bookmark payloads and normalize to SQLite | ✅ Complete |
 | Sprint 3 — Enrichment Slice | Phase 3 | Expand URLs and enrich unprocessed bookmarks | ✅ Complete |
 | Sprint 4 — Export Slice | Phase 4 | Render Markdown vault and wire `sync` end-to-end | ✅ Complete |
-| Sprint 5 — Export Hardening | Phase 4 | Close review findings and reach sign-off-ready export behavior | 🟡 Active |
+| Sprint 5 — Export Hardening | Phase 4 | Close review findings and reach sign-off-ready export behavior | ✅ Complete |
 
 ---
 
@@ -378,7 +378,7 @@ Sprint 4 delivered deterministic export and orchestration:
 
 ## Sprint 5 — Export Hardening
 
-**Status:** ACTIVE  
+**Status:** COMPLETE  
 **Goal:** Fix the Sprint 4 review findings so export is read-only safe, Markdown-fidelity safe, and sign-off ready in the documented dev environment.
 
 Sprint 5 is intentionally narrow. The export and sync slice already exists; this sprint closes the defects and validation gaps discovered in the first review.
@@ -417,12 +417,12 @@ Sprint 5 is limited to remediation and sign-off hardening:
 
 | ID | Task | Priority | Status | Depends On | Verification |
 |----|------|----------|--------|------------|--------------|
-| 5.1 | Remove export-time DB bootstrapping and fail fast on missing SQLite path | P0 | ⬜ Planned | Sprint 4 complete | `export` raises a readable error and does not create `state/app.db` when the DB path is absent |
-| 5.2 | Add automated coverage for missing-DB export behavior | P0 | ⬜ Planned | 5.1 | Test proves `export_markdown()` does not create or migrate a missing DB |
-| 5.3 | Escape or fence Markdown-sensitive tweet text, summaries, and resolved-link metadata | P0 | ⬜ Planned | Sprint 4 complete | Exported notes preserve literal content for `#`, `*`, and Markdown link syntax |
-| 5.4 | Add automated coverage for Markdown-fidelity edge cases | P0 | ⬜ Planned | 5.3 | Tests prove note structure remains stable for Markdown-heavy content |
-| 5.5 | Re-run the full export verification flow in Python 3.12+ with dev dependencies installed | P0 | ⬜ Planned | 5.2, 5.4 | `PYTHONPATH=src pytest` passes in the intended dev environment |
-| 5.6 | Re-run code review and sync handoff docs to the hardened state | P1 | ⬜ Planned | 5.5 | Review findings are cleared or explicitly downgraded, and docs match reality |
+| 5.1 | Remove export-time DB bootstrapping and fail fast on missing SQLite path | P0 | ✅ Done | Sprint 4 complete | `export` raises a readable error and does not create `state/app.db` when the DB path is absent |
+| 5.2 | Add automated coverage for missing-DB export behavior | P0 | ✅ Done | 5.1 | Test proves `export_markdown()` does not create or migrate a missing DB |
+| 5.3 | Escape or fence Markdown-sensitive tweet text, summaries, and resolved-link metadata | P0 | ✅ Done | Sprint 4 complete | Exported notes preserve literal content for `#`, `*`, and Markdown link syntax |
+| 5.4 | Add automated coverage for Markdown-fidelity edge cases | P0 | ✅ Done | 5.3 | Tests prove note structure remains stable for Markdown-heavy content |
+| 5.5 | Re-run the full export verification flow in Python 3.12+ with dev dependencies installed | P0 | ✅ Done | 5.2, 5.4 | `PYTHONPATH=src pytest` passes in the intended dev environment |
+| 5.6 | Re-run code review and sync handoff docs to the hardened state | P1 | ✅ Done | 5.5 | Review findings are cleared or explicitly downgraded, and docs match reality |
 
 ### Verification Gates
 
@@ -433,6 +433,15 @@ Sprint 5 is not done until all of these are true:
 - Markdown-sensitive tweet text, summaries, and resolved-link metadata render without corrupting note structure
 - `PYTHONPATH=src pytest` passes in the documented Python 3.12+ dev environment
 - A follow-up review no longer reports R002 or R003 as open issues
+
+### Exit Criteria Met
+
+- Missing SQLite paths now fail before export opens a writable database handle
+- Export validates required tables and columns read-only and reports stale schemas clearly
+- Summary/tweet content render in fenced literal blocks and resolved-link metadata is Markdown-escaped
+- `PYTHONPATH=src .venv/bin/python -m pytest` passed under Python 3.12.13
+- `PYTHONPATH=src .venv/bin/python -m leeknowledge export` passed against a valid smoke DB and failed cleanly against a missing DB
+- Follow-up review in `code-reviews/sprint-5-export-hardening-review.md` found no new blocking issues
 
 ### Manual Test Script
 

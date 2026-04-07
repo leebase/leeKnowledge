@@ -8,7 +8,7 @@
 
 | Attribute | Value |
 |-----------|-------|
-| **Phase** | Phase 4 — Export Hardening |
+| **Phase** | Phase 4 — Export Complete |
 | **Mode** | 2 (Implementation with approval) |
 | **Last Updated** | 2026-04-07 |
 
@@ -19,14 +19,14 @@
 | Sprint 2 — Extraction Slice | ✅ Complete | 100% |
 | Sprint 3 — Enrichment Slice | ✅ Complete | 100% |
 | Sprint 4 — Export Slice | ✅ Complete | 100% |
-| Sprint 5 — Export Hardening | 🟡 Active | 0% |
+| Sprint 5 — Export Hardening | ✅ Complete | 100% |
 
 ---
 
 ## What's Happening Now
 
 ### Current Work Stream
-Sprint 4 has now been implemented end-to-end through Agent-Orch: `export` renders Markdown notes, `sync` runs the full pipeline, and the resumed workflow finished successfully under run `63e50cd3b7d9`. The next work is Sprint 5 hardening to fix the high-priority export review findings and re-run sign-off checks in a Python 3.12+ dev environment.
+Sprint 5 hardening is now complete: export validates SQLite read-only instead of bootstrapping missing state, Markdown-sensitive content is rendered safely, and verification has been rerun in a Python 3.12 dev environment. The immediate next step is a human Obsidian spot-check on real exported notes, then selecting the next backlog slice.
 
 ### Recently Completed
 - ✅ Project scaffolded with init-agent
@@ -43,9 +43,12 @@ Sprint 4 has now been implemented end-to-end through Agent-Orch: `export` render
 - ✅ Sprint 4 export and sync workflow completed under Agent-Orch resume run `63e50cd3b7d9`
 - ✅ Sprint 4 review captured three follow-up deficiencies in `code-reviews/review-2026-04-07.md`
 - ✅ Docs were re-synced from the stale “Sprint 4 planned” state to the actual implemented state
+- ✅ Sprint 5 fixed export-time DB bootstrapping and Markdown-fidelity issues
+- ✅ Sprint 5 verification passed in a Python 3.12 `.venv` with `.[dev]` installed
+- ✅ Sprint 5 follow-up review closed R001-R003 in `code-reviews/sprint-5-export-hardening-review.md`
 
 ### In Progress
-- ⏳ Sprint 5 hardening plan is now the active work stream.
+- ⏳ No active implementation work; awaiting human Obsidian spot-check and next-sprint selection.
 
 ---
 
@@ -60,7 +63,8 @@ Sprint 4 has now been implemented end-to-end through Agent-Orch: `export` render
 | Sprint execution follows thin vertical slices | Each sprint must end with a runnable, verifiable capability and updated handoff docs | 2026-04-07 |
 | Sprint 3 enrichment stores explicit model, prompt_version, and schema_version values | Keeps enrichment reruns traceable and protects against prompt/schema drift | 2026-04-07 |
 | Agent-Orch runs should treat `artifacts/`, `.agent-orch-scratch/`, `src/leeknowledge.egg-info/`, and `state/` as operational paths | Prevents orchestration noise and local state files from causing false validation retries | 2026-04-07 |
-| Sprint 4 is functionally implemented but not sign-off ready until Sprint 5 closes R001-R003 | The first export review found a read-only export bug, Markdown fidelity risk, and a missing-test-environment gap | 2026-04-07 |
+| Export is a read-only consumer of SQLite state | Missing or stale DBs must fail clearly instead of being created or migrated during export | 2026-04-07 |
+| Tweet text and summary blocks render as literal fenced text during export | Preserves source fidelity when bookmark text contains Markdown syntax | 2026-04-07 |
 
 ---
 
@@ -101,9 +105,9 @@ Sprint 4 has now been implemented end-to-end through Agent-Orch: `export` render
 
 | Rank | Action | Owner | Done When |
 |------|--------|-------|----------|
-| 1 | Fix R002 export read-only integrity gap | AI | `export` fails clearly on a missing DB and never bootstraps or migrates SQLite state |
-| 2 | Fix R003 Markdown fidelity gap | AI | Tweet text, summaries, and resolved-link metadata render without altering note structure |
-| 3 | Re-run verification and review in the documented dev environment | Human+AI | Python 3.12+ dev env runs `PYTHONPATH=src pytest`, export/sync checks, and a clean follow-up review |
+| 1 | Do a human Obsidian spot-check on real exported notes | Human+AI | A sample vault note is reviewed in Obsidian preview/source mode and looks correct |
+| 2 | Choose the next delivery slice from the ready queue | Human+AI | A new active sprint is selected and reflected in `sprint-plan.md` |
+| 3 | Consider a regression fixture for backticks / multiline metadata | AI | Export tests cover the remaining Markdown edge cases called out in the Sprint 5 review |
 
 ---
 

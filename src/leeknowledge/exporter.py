@@ -19,7 +19,7 @@ except ImportError:  # pragma: no cover - exercised when dev deps are absent.
     FileSystemLoader = None
     StrictUndefined = None
 
-from leeknowledge.db import APP_DB_PATH, get_connection, initialize_database
+from leeknowledge.db import APP_DB_PATH, get_connection
 
 TEMPLATE_DIR = Path(__file__).resolve().parent / "templates"
 DEFAULT_VAULT_DIR = Path("vault")
@@ -54,7 +54,7 @@ def export_markdown(
 ) -> ExportRunResult:
     """Render one Markdown note per bookmark row in SQLite."""
 
-    resolved_db_path = initialize_database(db_path)
+    resolved_db_path = Path(db_path)
     if not resolved_db_path.exists():
         raise ExportError(f"SQLite database does not exist: {resolved_db_path}")
 
@@ -65,6 +65,7 @@ def export_markdown(
     written_paths: list[Path] = []
 
     with get_connection(resolved_db_path) as connection:
+        _validate_export_database(connection, resolved_db_path)
         rows = connection.execute(
             """
             SELECT
@@ -122,6 +123,7 @@ def _load_template():
         undefined=StrictUndefined,
     )
     environment.filters["yaml_scalar"] = _yaml_scalar
+    environment.filters["markdown_escape"] = _markdown_escape
     return environment.get_template("bookmark.md.j2")
 
 
@@ -264,6 +266,101 @@ def _load_json_list(value: Any) -> list[str]:
     return []
 
 
+def _validate_export_database(connection, db_path: Path) -> None:
+    if not _table_exists(connection, "bookmarks"):
+        raise ExportError(
+            f"SQLite database is missing required table 'bookmarks': {db_path}"
+        )
+    if not _table_exists(connection, "enrichments"):
+        raise ExportError(
+            f"SQLite database is missing required table 'enrichments': {db_path}"
+        )
+    if not _table_exists(connection, "url_cache"):
+        raise ExportError(
+            f"SQLite database is missing required table 'url_cache': {db_path}"
+        )
+
+    required_bookmark_columns = {
+        "tweet_id",
+        "text",
+        "author_username",
+        "author_display_name",
+        "created_at",
+        "conversation_id",
+        "in_reply_to_id",
+        "media_urls",
+        "raw_urls",
+        "first_seen_at",
+    }
+    required_enrichment_columns = {
+        "tweet_id",
+        "summary",
+        "tags",
+        "entities",
+        "topic",
+        "model",
+        "prompt_version",
+        "schema_version",
+        "validation_status",
+        "enriched_at",
+    }
+    required_url_cache_columns = {
+        "original_url",
+        "resolved_url",
+        "page_title",
+        "page_description",
+        "cached_at",
+    }
+
+    _validate_columns(
+        connection,
+        "bookmarks",
+        required_bookmark_columns,
+        db_path,
+    )
+    _validate_columns(
+        connection,
+        "enrichments",
+        required_enrichment_columns,
+        db_path,
+    )
+    _validate_columns(
+        connection,
+        "url_cache",
+        required_url_cache_columns,
+        db_path,
+    )
+
+
+def _table_exists(connection, table_name: str) -> bool:
+    row = connection.execute(
+        """
+        SELECT name
+        FROM sqlite_master
+        WHERE type = 'table' AND name = ?
+        """,
+        (table_name,),
+    ).fetchone()
+    return row is not None
+
+
+def _validate_columns(
+    connection,
+    table_name: str,
+    required_columns: set[str],
+    db_path: Path,
+) -> None:
+    rows = connection.execute(f"PRAGMA table_info({table_name})").fetchall()
+    available_columns = {str(row["name"]) for row in rows}
+    missing_columns = sorted(required_columns - available_columns)
+    if missing_columns:
+        missing_text = ", ".join(missing_columns)
+        raise ExportError(
+            f"SQLite database table '{table_name}' is missing required columns "
+            f"({missing_text}): {db_path}"
+        )
+
+
 def _yaml_scalar(value: Any) -> str:
     if value is None:
         return "null"
@@ -274,6 +371,23 @@ def _yaml_scalar(value: Any) -> str:
     if isinstance(value, str):
         return json.dumps(value)
     return json.dumps(value)
+
+
+def _markdown_escape(value: Any) -> str:
+    if value is None:
+        return ""
+    text = str(value)
+    text = text.replace("\\", "\\\\")
+    text = re.sub(r"([`*_{}\[\]()#+.!|>~-])", r"\\\1", text)
+    return text.replace("\n", "  \n")
+
+
+def _text_fence(value: Any) -> list[str]:
+    text = "" if value is None else str(value)
+    fence = "```"
+    while fence in text:
+        fence += "`"
+    return [fence + "text", text, fence]
 
 
 def _render_note_text(context: Mapping[str, Any]) -> str:
@@ -309,12 +423,18 @@ def _render_note_text(context: Mapping[str, Any]) -> str:
         ]
     )
     if context["summary"]:
-        lines.extend([f"> {context['summary']}", ""])
+        lines.extend(["## Summary", ""])
+        lines.extend(_text_fence(context["summary"]))
+        lines.append("")
     lines.extend(
         [
             "## Tweet",
             "",
-            str(context["text"]),
+        ]
+    )
+    lines.extend(_text_fence(context["text"]))
+    lines.extend(
+        [
             "",
             "## Resolved Links",
         ]
@@ -322,10 +442,11 @@ def _render_note_text(context: Mapping[str, Any]) -> str:
     resolved_links = context["resolved_links"]
     if resolved_links:
         for entry in resolved_links:
-            label = entry.page_title or entry.resolved_url
-            line = f"- [{label}]({entry.resolved_url})"
+            line = f"- URL: [{entry.resolved_url}]({entry.resolved_url})"
+            if entry.page_title:
+                line += f" | Title: {_markdown_escape(entry.page_title)}"
             if entry.page_description:
-                line += f" — {entry.page_description}"
+                line += f" | Description: {_markdown_escape(entry.page_description)}"
             lines.append(line)
     else:
         lines.append("- None")

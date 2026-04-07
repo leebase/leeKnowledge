@@ -12,8 +12,8 @@
 |-----------|-------|
 | **Project** | leeKnowledge |
 | **Profile** | Python Package |
-| **Current Phase** | Phase 4 — Export Hardening |
-| **Overall Status** | 🟡 MVP implemented, hardening active |
+| **Current Phase** | Phase 4 — Export Complete |
+| **Overall Status** | 🟢 MVP implemented and hardened |
 | **Last Updated** | 2026-04-07 |
 
 ---
@@ -28,10 +28,10 @@
 |-----------|--------|-------|
 | Extract bookmarks into raw JSON + SQLite | ✅ Done | Sprint 2 extraction slice is closed out |
 | Enrich bookmarks with summaries and tags | ✅ Done | Sprint 3 enrichment slice is closed out; rows store explicit model/prompt/schema versions |
-| Export Markdown vault for Obsidian | 🟡 Implemented, hardening needed | Sprint 4 ships `export`/`sync`, but Sprint 5 must fix read-only export behavior and Markdown escaping gaps |
+| Export Markdown vault for Obsidian | ✅ Done | Sprint 4 implemented export/sync and Sprint 5 hardened read-only DB behavior plus Markdown fidelity |
 | Product and technical direction defined | ✅ Done | Product, architecture, and sprint plan are established |
 
-**MVP status:** the full pipeline now exists end-to-end, but sign-off is blocked by Sprint 5 hardening and a clean follow-up review.
+**MVP status:** the full pipeline exists end-to-end and the first hardening pass is complete. The remaining work is human-facing sign-off and choosing the next backlog slice.
 
 ### Current Phase Goals
 
@@ -53,7 +53,7 @@
 | Sprint 2 — Extraction Slice | Raw archive + SQLite normalization | ✅ Complete |
 | Sprint 3 — Enrichment Slice | URL expansion + LLM enrichment | ✅ Complete |
 | Sprint 4 — Export Slice | Markdown vault + `sync` | ✅ Complete |
-| Sprint 5 — Export Hardening | Review findings, fidelity, and sign-off | 🟡 Active |
+| Sprint 5 — Export Hardening | Review findings, fidelity, and sign-off | ✅ Complete |
 
 ---
 
@@ -65,8 +65,7 @@
 | Chrome auth state is required locally | Extraction cannot run without active login | 🟡 Needs local setup |
 | LLM config is local-only and not yet created | Enrichment cannot run until configured | 🟡 Expected for later phase |
 | Local runtime is still Python 3.9.6 in this shell | Declared deps target Python 3.12+ | 🟡 Needs environment alignment |
-| Export currently bootstraps SQLite on missing DB | Can mask operator mistakes and break read-only expectations | 🔴 Sprint 5 blocker |
-| Markdown text is not yet escaped during export | Real bookmark text can distort rendered notes | 🟡 Sprint 5 fix queued |
+| Human Obsidian review has not yet been done on a real vault export | Final UX confidence still depends on one manual spot-check | 🟡 Follow-up |
 
 ---
 
@@ -85,7 +84,7 @@ Decisions that affect product direction (for technical decisions, see `architect
 
 ## What "Done" Looks Like
 
-- [ ] MVP criteria signed off after Sprint 5 hardening
+- [x] MVP criteria implemented and hardened through Sprint 5
 - [x] Lee can run `python -m leeknowledge sync` and produce a browsable Markdown vault
 - [ ] Documentation and runbooks are complete enough for future sessions to continue cleanly
 

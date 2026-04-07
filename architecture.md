@@ -75,7 +75,7 @@ Python CLI using Typer. Current command state:
 | `export` | Completed Sprint 4 command: render Markdown vault notes from SQLite |
 | `sync` | Completed Sprint 4 command: run extract → enrich → export in sequence |
 
-All four pipeline commands now exist end-to-end. The current gap is not missing functionality but Sprint 5 hardening: export must stop bootstrapping a missing SQLite DB, and exported Markdown needs escaping so source text cannot accidentally change note structure.
+All four pipeline commands now exist end-to-end. Sprint 5 hardened the export path so it validates SQLite read-only instead of bootstrapping missing state, and so Markdown-sensitive content is rendered in a source-faithful way.
 
 ### 2. Extractor (`src/leeknowledge/extractor.py`)
 
@@ -210,14 +210,15 @@ Current implementation: reads bookmarks + enrichments from SQLite, renders Markd
 - Notes are written under `vault/YYYY/MM/<slug>-<tweet_id>.md`, where `YYYY/MM` comes from `created_at` when available and falls back to `first_seen_at`.
 - `slug` is derived deterministically from the tweet text or author/text combo, lowercased and hyphenated; if no stable slug can be formed, fall back to `tweet-<tweet_id>`.
 - Reruns must be idempotent at the file level: the same source row yields the same path, and the exporter replaces the existing file atomically instead of creating a conflicting duplicate.
-- Sprint 5 hardening must make export fail clearly on a missing DB path instead of initializing or migrating SQLite state.
+- Export validates the SQLite path and required schema read-only before querying. Missing files or stale schemas fail with readable errors instead of being created or migrated during export.
 
 **Markdown note contract**
 - YAML frontmatter must preserve the source identity and enrichment provenance: `tweet_id`, `author_username`, `author_display_name`, `created_at`, `topic`, `tags`, `summary`, `entities`, `raw_urls`, `resolved_urls`, `model`, `prompt_version`, `schema_version`, `validation_status`, and `enriched_at`.
 - The body must keep the tweet text visible as source content, followed by any resolved links or references, and end with a link back to the original tweet.
 - Missing enrichment data should remain visible as null or empty fields rather than being fabricated.
 - Jinja2 templates own the formatting; the template output must stay source-grounded and readable in plain text or Obsidian.
-- Sprint 5 hardening must escape Markdown-sensitive text in tweet bodies, summaries, and resolved-link metadata so exported notes preserve source fidelity.
+- Tweet text and summaries render inside fenced `text` blocks so source content stays literal.
+- Resolved-link titles and descriptions are Markdown-escaped before rendering so punctuation cannot alter note structure.
 
 **Implemented in Sprint 4**
 - `export` loads bookmark and enrichment rows from SQLite, builds a render context, and feeds that context into a Jinja2 note template stored under `src/leeknowledge/templates/`.
@@ -226,10 +227,10 @@ Current implementation: reads bookmarks + enrichments from SQLite, renders Markd
 - `sync` remains a sequential orchestrator: extract → enrich → export. It must halt immediately on the first failing stage, preserve outputs from earlier stages, and never try to export from a failed upstream run.
 - Operator validation happens in two places: automated fidelity tests compare rendered notes to SQLite rows, and a human opens the vault in Obsidian to confirm a sample note is legible, searchable, and faithfully rendered.
 
-**Sprint 5 hardening targets**
-- Export should validate the SQLite path read-only and fail fast instead of bootstrapping database state.
-- Markdown-sensitive content should be escaped or fenced so note structure stays stable for real-world tweets and metadata.
-- Review and sign-off should run in the documented Python 3.12+ dev environment so `pytest` is available for the final pass.
+**Sprint 5 hardening completed**
+- Export now validates the SQLite path read-only and fails fast instead of bootstrapping database state.
+- Markdown-sensitive content is escaped or fenced so note structure stays stable for real-world tweets and metadata.
+- Verification and follow-up review were rerun in a Python 3.12+ dev environment with `.[dev]` installed.
 
 **Export contract**
 - Export reads only SQLite state and may not mutate extraction or enrichment tables.

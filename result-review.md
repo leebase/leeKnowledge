@@ -6,6 +6,31 @@
 
 ---
 
+## 2026-04-07 — Sprint 5 Export Hardening Completed
+
+**Hardening complete** closed the first export review findings: export now treats SQLite as a read-only prerequisite instead of bootstrapping missing state, Markdown-sensitive content renders safely, and verification was rerun in a Python 3.12 dev environment with the project’s dev dependencies installed.
+
+### Completed
+
+| File / Area | Outcome |
+|-------------|---------|
+| `src/leeknowledge/exporter.py` | Removed export-time DB initialization, added read-only schema validation, and hardened fallback rendering for literal-safe note content |
+| `src/leeknowledge/templates/bookmark.md.j2` | Switched summary and tweet rendering to fenced literal blocks and escaped resolved-link metadata |
+| `tests/test_export.py` | Added missing-DB, stale-schema, and Markdown-fidelity regression coverage |
+| `.venv` dev environment | Verified the project in Python 3.12 with `pip install -e ".[dev]"` and `PYTHONPATH=src .venv/bin/python -m pytest` |
+| `code-reviews/sprint-5-export-hardening-review.md` | Recorded the follow-up review confirming R001-R003 are closed |
+| Handoff docs | Advanced project memory from “Sprint 5 active” to “Sprint 5 complete” |
+
+### How To Verify
+
+1. Run `PYTHONPATH=src .venv/bin/python -m pytest`
+2. Run `PYTHONPATH=src .venv/bin/python -m leeknowledge export --db-path /tmp/leeKnowledge-missing-venv.db --vault-dir /tmp/leeKnowledge-vault-venv` and confirm it fails cleanly
+3. Run `PYTHONPATH=src .venv/bin/python -m leeknowledge export --db-path /tmp/leeKnowledge-smoke.db --vault-dir /tmp/leeKnowledge-smoke-vault`
+4. Inspect `/tmp/leeKnowledge-smoke-vault/2026/04/header-bullet-with-stars-and-link-https-example-com-smoke-1.md` and confirm the summary/tweet content is fenced literally and resolved-link metadata is escaped
+5. Read [code-reviews/sprint-5-export-hardening-review.md](/Users/lee/projects/leeKnowledge/code-reviews/sprint-5-export-hardening-review.md)
+
+---
+
 ## 2026-04-07 — Sprint 4 Docs Re-Synced And Sprint 5 Hardening Planned
 
 **Handoff repair** brought the project memory back into sync with the actual Agent-Orch outcome: Sprint 4 export and `sync` are implemented, the resumed run completed successfully under `63e50cd3b7d9`, and the next tactical slice is now Sprint 5 hardening for the three review findings.

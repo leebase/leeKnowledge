@@ -11,7 +11,7 @@ from leeknowledge.db import (
     insert_enrichment,
     upsert_url_cache,
 )
-from leeknowledge.exporter import export_markdown
+from leeknowledge.exporter import ExportError, export_markdown
 
 
 def _bookmark(tweet_id: str = "123") -> dict[str, object]:
@@ -78,12 +78,29 @@ def test_export_markdown_renders_source_grounded_notes(tmp_path):
     assert '- "https://example.com/article"' in note_text
     assert '# @lee — 2026-04-07' in note_text
     assert 'Useful bookmark for the vault' in note_text
-    assert 'Example article' in note_text
-    assert 'A useful reference' in note_text
+    assert '```text\nUseful bookmark for the vault\n```' in note_text
+    assert 'URL: [https://example.com/article](https://example.com/article)' in note_text
+    assert 'Title: Example article' in note_text
+    assert 'Description: A useful reference' in note_text
     assert '[View on X](https://x.com/i/web/status/123)' in note_text
 
 
-def test_export_migrates_existing_database_schema(tmp_path):
+def test_export_fails_when_database_path_is_missing(tmp_path):
+    db_path = tmp_path / "state" / "missing.db"
+    vault_dir = tmp_path / "vault"
+
+    try:
+        export_markdown(db_path=db_path, vault_dir=vault_dir)
+    except ExportError as exc:
+        message = str(exc)
+    else:  # pragma: no cover - defensive
+        raise AssertionError("export_markdown() should fail for a missing database")
+
+    assert "SQLite database does not exist" in message
+    assert not db_path.exists()
+
+
+def test_export_fails_for_legacy_database_schema(tmp_path):
     db_path = tmp_path / "state" / "app.db"
     vault_dir = tmp_path / "vault"
     db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -199,12 +216,57 @@ def test_export_migrates_existing_database_schema(tmp_path):
         )
         connection.commit()
 
-    result = export_markdown(db_path=db_path, vault_dir=vault_dir)
+    try:
+        export_markdown(db_path=db_path, vault_dir=vault_dir)
+    except ExportError as exc:
+        message = str(exc)
+    else:  # pragma: no cover - defensive
+        raise AssertionError("export_markdown() should fail for a legacy schema")
 
-    assert result.exported_note_count == 1
-    note_path = result.written_paths[0]
-    assert note_path.exists()
-    assert note_path.read_text().startswith("---\ntweet_id: \"123\"")
+    assert "missing required columns" in message
+    assert "prompt_version" in message
+    assert "schema_version" in message
+    assert "validation_status" in message
+
+
+def test_export_preserves_markdown_sensitive_content(tmp_path):
+    db_path = tmp_path / "state" / "app.db"
+    vault_dir = tmp_path / "vault"
+    initialize_database(db_path)
+
+    with get_connection(db_path) as connection:
+        insert_bookmark(
+            connection,
+            _bookmark("md-1")
+            | {
+                "text": "# Header\n- bullet with *stars* and [link](https://example.com)",
+            },
+        )
+        insert_enrichment(
+            connection,
+            _enrichment("md-1")
+            | {
+                "summary": "Summary with #hash and *stars* plus [link](https://example.com)",
+            },
+        )
+        upsert_url_cache(
+            connection,
+            {
+                "original_url": "https://t.co/example",
+                "resolved_url": "https://example.com/article",
+                "page_title": "Example [article]",
+                "page_description": "Description with *stars* and #hash",
+                "cached_at": "2026-04-07T09:08:00Z",
+            },
+        )
+
+    result = export_markdown(db_path=db_path, vault_dir=vault_dir)
+    note_text = result.written_paths[0].read_text()
+
+    assert "```text\nSummary with #hash and *stars* plus [link](https://example.com)\n```" in note_text
+    assert "```text\n# Header\n- bullet with *stars* and [link](https://example.com)\n```" in note_text
+    assert r"Title: Example \[article\]" in note_text
+    assert r"Description: Description with \*stars\* and \#hash" in note_text
 
 
 def test_sync_runs_extract_enrich_export_in_order(tmp_path, monkeypatch):

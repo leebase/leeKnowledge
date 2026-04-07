@@ -52,16 +52,22 @@ enriched_at: {{ enriched_at | yaml_scalar }}
 # {{ note_title }}
 
 {% if summary %}
-> {{ summary }}
+## Summary
+
+```text
+{{ summary }}
+```
 {% endif %}
 
 ## Tweet
 
+```text
 {{ text }}
+```
 
 ## Resolved Links
 {% if resolved_links %}
-{% for entry in resolved_links %}- [{{ entry.page_title or entry.resolved_url }}]({{ entry.resolved_url }}){% if entry.page_description %} — {{ entry.page_description }}{% endif %}
+{% for entry in resolved_links %}- URL: [{{ entry.resolved_url }}]({{ entry.resolved_url }}){% if entry.page_title %} | Title: {{ entry.page_title | markdown_escape }}{% endif %}{% if entry.page_description %} | Description: {{ entry.page_description | markdown_escape }}{% endif %}
 {% endfor %}{% else %}- None
 {% endif %}
 

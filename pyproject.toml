@@ -3,25 +3,28 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "leeKnowledge"
+name = "leeknowledge"
 version = "0.1.0"
-description = "AI-agent project: leeKnowledge"
+description = "Local-first X bookmark to Markdown knowledge pipeline"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = {text = "MIT"}
 authors = [
     {name = "Lee Harrington"}
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    # Add your dependencies here
+    "httpx>=0.27",
+    "jinja2>=3.1",
+    "playwright>=1.44",
+    "pydantic>=2.7",
+    "PyYAML>=6.0",
+    "typer>=0.12",
 ]
 
 [project.optional-dependencies]
@@ -32,16 +35,22 @@ dev = [
 ]
 
 [project.scripts]
-leeKnowledge = "leeKnowledge.main:main"
+leeknowledge = "leeknowledge.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+leeknowledge = ["templates/*.j2"]
+
 [tool.black]
 line-length = 88
-target-version = ['py310']
+target-version = ['py312']
 
 [tool.ruff]
 line-length = 88
 select = ["E", "F", "W", "I"]
 ignore = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

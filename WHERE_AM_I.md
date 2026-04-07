@@ -12,8 +12,8 @@
 |-----------|-------|
 | **Project** | leeKnowledge |
 | **Profile** | Python Package |
-| **Current Phase** | Phase 0 — Bootstrap |
-| **Overall Status** | 🟡 Just scaffolded |
+| **Current Phase** | Phase 2 — Extraction |
+| **Overall Status** | 🟡 Active build sprint |
 | **Last Updated** | 2026-04-07 |
 
 ---
@@ -26,17 +26,18 @@
 
 | Criterion | Status | Notes |
 |-----------|--------|-------|
-| Core feature 1 | ⬜ Not started | |
-| Core feature 2 | ⬜ Not started | |
-| Basic documentation | ✅ Done | Scaffolded by init-agent |
+| Extract bookmarks into raw JSON + SQLite | ⬜ Not started | Active Sprint 2 goal |
+| Enrich bookmarks with summaries and tags | ⬜ Not started | Planned Sprint 3 |
+| Export Markdown vault for Obsidian | ⬜ Not started | Planned Sprint 4 |
+| Product and technical direction defined | ✅ Done | Product, architecture, and sprint plan are established |
 
 ### Current Phase Goals
 
 | Goal | Status | Notes |
 |------|--------|-------|
-| Establish project structure | ✅ Done | |
-| Define product vision | ⬜ Not started | Update `product-definition.md` |
-| First working feature | ⬜ Not started | |
+| Define product vision and architecture | ✅ Done | Core docs added |
+| Establish runnable Phase 1 scaffold | ✅ Done | Package, CLI, DB, tests, and local artifact dirs aligned |
+| Capture and normalize first real bookmark payload | ⬜ Not started | Active Sprint 2 goal |
 
 ---
 
@@ -44,7 +45,10 @@
 
 | Sprint | Focus | Status |
 |--------|-------|--------|
-| Sprint 1 — Foundation | Core setup and first feature | 🟡 Planning |
+| Sprint 1 — Foundation | Scaffolding, DB, and CLI baseline | ✅ Complete |
+| Sprint 2 — Extraction Slice | Raw archive + SQLite normalization | 🟡 Active |
+| Sprint 3 — Enrichment Slice | URL expansion + LLM enrichment | ⬜ Planned |
+| Sprint 4 — Export Slice | Markdown vault + `sync` | ⬜ Planned |
 
 ---
 
@@ -52,7 +56,10 @@
 
 | Risk/Blocker | Impact | Status |
 |-------------|--------|--------|
-| Product definition not yet written | Can't validate direction | 🟡 Action needed |
+| X DOM / GraphQL changes can break extraction | Extraction is brittle by nature | 🟡 Accepted risk |
+| Chrome auth state is required locally | Extraction cannot run without active login | 🟡 Needs local setup |
+| LLM config is local-only and not yet created | Enrichment cannot run until configured | 🟡 Expected for later phase |
+| Local runtime is still Python 3.9.6 in this shell | Declared deps target Python 3.12+ | 🟡 Needs environment alignment |
 
 ---
 
@@ -63,16 +70,17 @@ Decisions that affect product direction (for technical decisions, see `architect
 | Decision | Rationale | Date |
 |----------|-----------|------|
 | Python Package profile selected | Best fit for project goals | 2026-04-07 |
+| Product is a personal bookmark-to-knowledge pipeline | Scope stays local-first, single-user, and durable | 2026-04-07 |
+| Pipeline stages are Extract → Normalize → Enrich → Export | Keeps unstable scraping isolated from stable downstream stages | 2026-04-07 |
+| Sprint work is organized as thin vertical slices | Each sprint should end with runnable value and explicit verification | 2026-04-07 |
 
 ---
 
 ## What "Done" Looks Like
 
-> Pull from `product-definition.md` once written. This section answers: "How do we know we've succeeded?"
-
 - [ ] MVP criteria met
-- [ ] Users can [core use case]
-- [ ] Documentation complete
+- [ ] Lee can run `python -m leeknowledge sync` and produce a browsable Markdown vault
+- [ ] Documentation and runbooks are complete enough for future sessions to continue cleanly
 
 ---
 

@@ -37,8 +37,21 @@ Load the relevant skill file when the trigger applies. Do not try to remember â€
 | You are about to commit | `skills/documentation.md` |
 | You are creating a backlog item | `skills/backlog.md` |
 | You are closing a sprint or preparing a release | `skills/code-review.md` |
+| You are designing or revising the Playwright bookmark extractor | `skills/playwright-bookmarks-adapter-design.md` |
+| You are defining what raw extraction archives must preserve | `skills/raw-capture-contract-design.md` |
+| You are implementing normalization, dedupe, or canonical mapping | `skills/canonical-normalizer-design.md` |
+| X DOM selectors broke or you need a DOM fallback | `skills/selector-hardener.md` |
+| You are reviewing failure handling for a pipeline stage | `skills/pipeline-failure-review.md` |
+| You are changing enrichment prompts, schemas, or model versioning | `skills/llm-enrichment-contract-review.md` |
+| You are designing Markdown notes, frontmatter, or vault layout | `skills/markdown-vault-architect.md` |
 
 Skills are short, focused, and task-specific. They contain the judgment, not just the steps.
+
+## Support Agents
+
+Project-specific specialist agents live in `support-agents.md`.
+Read that file when the task needs a specialized review role such as
+extraction validation, schema review, failure-mode review, or vault-quality review.
 
 ---
 
@@ -100,6 +113,7 @@ The `Mode` field in `context.md` controls how independently you work:
 | `result-review.md` | Every session start | When work completed |
 | `sprint-plan.md` | Every session start | When tasks complete |
 | `sprint-review.md` | After sprints | External AI fills in review |
+| `support-agents.md` | When specialized review/planning is needed | When agent roles change |
 | `project-plan.md` | When direction unclear | Strategic changes only |
 | `product-definition.md` | When scope unclear | Product changes only |
 | `architecture.md` | When making tech decisions | When decisions are made |

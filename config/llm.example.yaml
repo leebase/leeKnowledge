@@ -1,0 +1,16 @@
+llm:
+  default_role: enricher
+  providers:
+    pi_harness:
+      type: codex_cli
+      command: pi
+      args: ["--provider", "openai-codex", "--print"]
+      response_format: json
+      text_field: output_text
+      timeout: 60.0
+  roles:
+    enricher:
+      provider: pi_harness
+      model: gpt-4o
+      temperature: 0.3
+      json_mode: true

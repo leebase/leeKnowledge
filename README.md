@@ -1,43 +1,54 @@
 # leeKnowledge
 
-A Python project scaffolded with init-agent.
+Local-first pipeline for turning X/Twitter bookmarks into a durable Markdown
+knowledge base.
 
-## Description
+## What It Is
 
-leeKnowledge is an AI-agent project.
+The project extracts bookmarks from `x.com/i/bookmarks`, saves immutable raw
+JSON, normalizes into SQLite, enriches bookmarks with LLM-generated metadata,
+and exports Markdown notes that work well in Obsidian or any text editor.
 
-## Installation
+## Current State
 
-```bash
-pip install -e .
-```
+The product, architecture, and project plan are now defined. The repository is
+currently at the Phase 1 scaffold stage:
+- Lowercase Python package: `leeknowledge`
+- CLI skeleton with `extract`, `enrich`, `export`, and `sync`
+- SQLite schema bootstrap and deduplicating bookmark insert helper
+- Tests for DB initialization and dedup behavior
 
-## Usage
-
-```bash
-leeKnowledge --help
-```
+The extraction, enrichment, and export implementations are still stubs.
 
 ## Development Setup
 
-Install with development dependencies:
-
 ```bash
+python3 -m venv .venv
+. .venv/bin/activate
 pip install -e ".[dev]"
+python -m playwright install chromium
 ```
 
-Run tests:
+## Verify The Scaffold
 
 ```bash
-pytest
+PYTHONPATH=src python3 -m leeknowledge --help
+PYTHONPATH=src pytest
 ```
 
-Format code:
+## Planned Commands
 
-```bash
-black src/
-ruff check src/
-```
+- `python -m leeknowledge extract`
+- `python -m leeknowledge enrich`
+- `python -m leeknowledge export`
+- `python -m leeknowledge sync`
+
+## Local-Only Files
+
+- `data/raw/` keeps immutable extraction archives
+- `state/app.db` stores normalized bookmarks and enrichments
+- `vault/` holds generated Markdown notes
+- `config/llm.yaml` stays untracked for local LLM routing config
 
 ## Updating Templates
 

@@ -16,6 +16,13 @@ def test_initialize_database_creates_expected_tables(tmp_path):
     table_names = {row["name"] for row in rows}
     assert {"bookmarks", "enrichments", "url_cache", "bookmarks_fts"} <= table_names
 
+    with get_connection(db_path) as connection:
+        enrichment_columns = {
+            row[1] for row in connection.execute("PRAGMA table_info(enrichments)")
+        }
+
+    assert {"prompt_version", "schema_version", "validation_status"} <= enrichment_columns
+
 
 def test_insert_bookmark_ignores_duplicate_tweet_ids(tmp_path):
     db_path = tmp_path / "app.db"

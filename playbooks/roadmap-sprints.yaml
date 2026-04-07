@@ -1,0 +1,272 @@
+{
+  "playbook_id": "leeknowledge_roadmap_sprints",
+  "name": "leeKnowledge Roadmap Sprints",
+  "defaults": {
+    "worker": "pi_cli",
+    "retry_policy": {
+      "max_attempts": 3,
+      "strategy": "rerun_with_validation_feedback"
+    }
+  },
+  "operational_paths": [
+    "artifacts/",
+    ".agent-orch-scratch/",
+    "src/leeknowledge.egg-info/",
+    "state/"
+  ],
+  "run_policy": {
+    "on_step_failure": "halt",
+    "require_validation_pass_to_advance": true
+  },
+  "steps": [
+    {
+      "step_id": "reconcile_baseline",
+      "name": "Reconcile completed foundation baseline",
+      "mission": "Read the canon docs, confirm the Phase 1 scaffold baseline, and align the active sprint state before executing the remaining roadmap sprints. Use the pi harness default model for this run.",
+      "allowed_paths": [
+        "AGENTS.md",
+        "product-definition.md",
+        "project-plan.md",
+        "architecture.md",
+        "sprint-plan.md",
+        "context.md",
+        "WHERE_AM_I.md",
+        "result-review.md",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "define_sprint_2_extraction",
+      "name": "Define Sprint 2 extraction slice",
+      "mission": "Turn Sprint 2 in sprint-plan.md into a narrow delivery contract for immutable raw capture plus SQLite normalization, including scope boundaries, required outputs, and verification gates.",
+      "allowed_paths": [
+        "sprint-plan.md",
+        "architecture.md",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "plan_sprint_2_extraction",
+      "name": "Plan Sprint 2 extraction implementation",
+      "mission": "Convert the Sprint 2 contract into an implementation-ready plan covering extractor boundaries, raw archive rules, canonical normalization, fallback sequencing, dedup semantics, and verification order.",
+      "allowed_paths": [
+        "architecture.md",
+        "sprint-plan.md",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "implement_sprint_2_extraction",
+      "name": "Implement Sprint 2 extraction slice",
+      "mission": "Ship extractor and normalizer code for Chrome-profile launch, bookmark capture, raw archive persistence, SQLite insertion, and extract command wiring.",
+      "allowed_paths": [
+        "src/",
+        "tests/",
+        "config/",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "document_sprint_2_extraction",
+      "name": "Document Sprint 2 extraction slice",
+      "mission": "Update user-facing and operator-facing docs for the extraction slice, including usage notes, configuration expectations, and any changed operator steps.",
+      "allowed_paths": [
+        "README.md",
+        "AGENTS.md",
+        "sprint-plan.md",
+        "architecture.md",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "repair_verify_sprint_2_extraction",
+      "name": "Repair and verify Sprint 2 extraction slice",
+      "mission": "Run the required tests and real workflow checks for the extraction slice, repair failures, and stop only when raw archives, SQLite inserts, and rerun behavior are clean.",
+      "allowed_paths": [
+        "src/",
+        "tests/",
+        "config/",
+        "data/raw/",
+        "state/",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "review_sprint_2_extraction",
+      "name": "Review Sprint 2 extraction results",
+      "mission": "Produce a code review artifact focused on bugs, regressions, brittleness, and testing gaps in the extraction slice.",
+      "allowed_paths": [
+        "code-reviews/",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "closeout_sprint_2_extraction",
+      "name": "Close out Sprint 2 docs",
+      "mission": "Update result review, context, sprint status, and architecture notes for the extraction slice so another run can start from a clean handoff.",
+      "allowed_paths": [
+        "result-review.md",
+        "context.md",
+        "sprint-plan.md",
+        "WHERE_AM_I.md",
+        "architecture.md",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "define_sprint_3_enrichment",
+      "name": "Define Sprint 3 enrichment slice",
+      "mission": "Write the scoped delivery contract for URL expansion, optional page metadata fetch, structured enrichment output, and enrichment rerun behavior.",
+      "allowed_paths": [
+        "sprint-plan.md",
+        "architecture.md",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "plan_sprint_3_enrichment",
+      "name": "Plan Sprint 3 enrichment implementation",
+      "mission": "Turn the Sprint 3 contract into an implementation plan covering llm config, enrichment schema, validation, versioning, and failure handling.",
+      "allowed_paths": [
+        "architecture.md",
+        "sprint-plan.md",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "implement_sprint_3_enrichment",
+      "name": "Implement Sprint 3 enrichment slice",
+      "mission": "Ship URL expansion, enrichment pipeline code, SQLite persistence for enrichments, and the enrich command with structured, replayable behavior.",
+      "allowed_paths": [
+        "src/",
+        "tests/",
+        "config/",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "document_sprint_3_enrichment",
+      "name": "Document Sprint 3 enrichment slice",
+      "mission": "Update docs for enrichment configuration, rerun semantics, optional behavior, and any operator guidance needed for local model routing.",
+      "allowed_paths": [
+        "README.md",
+        "AGENTS.md",
+        "sprint-plan.md",
+        "architecture.md",
+        "support-agents.md",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "repair_verify_sprint_3_enrichment",
+      "name": "Repair and verify Sprint 3 enrichment slice",
+      "mission": "Run automated checks and enrichment workflow validation, repair failures, and stop only when malformed output handling and rerun behavior are clean.",
+      "allowed_paths": [
+        "src/",
+        "tests/",
+        "config/",
+        "state/",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "review_sprint_3_enrichment",
+      "name": "Review Sprint 3 enrichment results",
+      "mission": "Produce a code review artifact focused on enrichment correctness, replay safety, prompt/schema risk, and missing tests.",
+      "allowed_paths": [
+        "code-reviews/",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "closeout_sprint_3_enrichment",
+      "name": "Close out Sprint 3 docs",
+      "mission": "Update result review, context, sprint state, and architecture notes for the enrichment slice so the export sprint can start from accurate handoff docs.",
+      "allowed_paths": [
+        "result-review.md",
+        "context.md",
+        "sprint-plan.md",
+        "WHERE_AM_I.md",
+        "architecture.md",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "define_sprint_4_export",
+      "name": "Define Sprint 4 export slice",
+      "mission": "Write the scoped delivery contract for Markdown rendering, vault layout, sync orchestration, and end-to-end fidelity checks.",
+      "allowed_paths": [
+        "sprint-plan.md",
+        "architecture.md",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "plan_sprint_4_export",
+      "name": "Plan Sprint 4 export implementation",
+      "mission": "Turn the Sprint 4 contract into an implementation plan covering note templates, path conventions, sync sequencing, and operator validation in Obsidian.",
+      "allowed_paths": [
+        "architecture.md",
+        "sprint-plan.md",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "implement_sprint_4_export",
+      "name": "Implement Sprint 4 export slice",
+      "mission": "Ship Markdown rendering, vault path generation, sync orchestration, and export command behavior that combines bookmarks plus enrichments into final notes.",
+      "allowed_paths": [
+        "src/",
+        "tests/",
+        "vault/",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "document_sprint_4_export",
+      "name": "Document Sprint 4 export slice",
+      "mission": "Update user-facing and operator-facing docs for export, sync, vault layout, and manual quality checks in Obsidian.",
+      "allowed_paths": [
+        "README.md",
+        "AGENTS.md",
+        "sprint-plan.md",
+        "architecture.md",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "repair_verify_sprint_4_export",
+      "name": "Repair and verify Sprint 4 export slice",
+      "mission": "Run tests and end-to-end sync validation, repair failures, and stop only when export fidelity, vault structure, and sync behavior are clean.",
+      "allowed_paths": [
+        "src/",
+        "tests/",
+        "vault/",
+        "state/",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "review_sprint_4_export",
+      "name": "Review Sprint 4 export results",
+      "mission": "Produce a code review artifact focused on regressions, Markdown quality risks, sync integrity, and missing validation.",
+      "allowed_paths": [
+        "code-reviews/",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "closeout_sprint_4_export",
+      "name": "Close out Sprint 4 docs",
+      "mission": "Update result review, context, sprint plan, project health, and architecture notes so the repo accurately reflects MVP completion or the remaining gaps.",
+      "allowed_paths": [
+        "result-review.md",
+        "context.md",
+        "sprint-plan.md",
+        "WHERE_AM_I.md",
+        "architecture.md",
+        "playbooks/"
+      ]
+    }
+  ]
+}

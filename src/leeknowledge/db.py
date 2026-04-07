@@ -7,7 +7,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 APP_DB_PATH = Path("state/app.db")
 
@@ -32,6 +32,9 @@ CREATE TABLE IF NOT EXISTS enrichments (
     entities TEXT,
     topic TEXT,
     model TEXT,
+    prompt_version TEXT,
+    schema_version TEXT,
+    validation_status TEXT,
     enriched_at TIMESTAMP,
     FOREIGN KEY (tweet_id) REFERENCES bookmarks(tweet_id)
 );
@@ -70,6 +73,12 @@ CREATE TRIGGER IF NOT EXISTS bookmarks_au AFTER UPDATE ON bookmarks BEGIN
 END;
 """
 
+ENRICHMENT_COLUMNS = {
+    "prompt_version": "TEXT",
+    "schema_version": "TEXT",
+    "validation_status": "TEXT",
+}
+
 
 def get_connection(db_path: Path | str = APP_DB_PATH) -> sqlite3.Connection:
     """Return a SQLite connection with row access enabled."""
@@ -85,6 +94,7 @@ def initialize_database(db_path: Path | str = APP_DB_PATH) -> Path:
     resolved_path = Path(db_path)
     with get_connection(resolved_path) as connection:
         connection.executescript(SCHEMA)
+        _migrate_enrichments_table(connection)
         connection.commit()
     return resolved_path
 
@@ -138,7 +148,143 @@ def insert_bookmark(
     return cursor.rowcount == 1
 
 
+def insert_enrichment(
+    connection: sqlite3.Connection,
+    enrichment: Mapping[str, Any],
+) -> bool:
+    """Insert a single enrichment row, leaving existing history untouched."""
+    payload = {
+        "tweet_id": enrichment["tweet_id"],
+        "summary": enrichment.get("summary"),
+        "tags": _to_json_or_none(enrichment.get("tags")),
+        "entities": _to_json_or_none(enrichment.get("entities")),
+        "topic": enrichment.get("topic"),
+        "model": enrichment.get("model"),
+        "prompt_version": enrichment.get("prompt_version"),
+        "schema_version": enrichment.get("schema_version"),
+        "validation_status": enrichment.get("validation_status"),
+        "enriched_at": enrichment.get("enriched_at"),
+    }
+    cursor = connection.execute(
+        """
+        INSERT OR IGNORE INTO enrichments (
+            tweet_id,
+            summary,
+            tags,
+            entities,
+            topic,
+            model,
+            prompt_version,
+            schema_version,
+            validation_status,
+            enriched_at
+        ) VALUES (
+            :tweet_id,
+            :summary,
+            :tags,
+            :entities,
+            :topic,
+            :model,
+            :prompt_version,
+            :schema_version,
+            :validation_status,
+            :enriched_at
+        )
+        """,
+        payload,
+    )
+    connection.commit()
+    return cursor.rowcount == 1
+
+
+def upsert_url_cache(
+    connection: sqlite3.Connection,
+    url_entry: Mapping[str, Any],
+) -> None:
+    """Store a resolved URL mapping for replayable enrichment."""
+    payload = {
+        "original_url": url_entry["original_url"],
+        "resolved_url": url_entry.get("resolved_url"),
+        "page_title": url_entry.get("page_title"),
+        "page_description": url_entry.get("page_description"),
+        "cached_at": url_entry.get("cached_at"),
+    }
+    connection.execute(
+        """
+        INSERT INTO url_cache (
+            original_url,
+            resolved_url,
+            page_title,
+            page_description,
+            cached_at
+        ) VALUES (
+            :original_url,
+            :resolved_url,
+            :page_title,
+            :page_description,
+            :cached_at
+        )
+        ON CONFLICT(original_url) DO UPDATE SET
+            resolved_url = excluded.resolved_url,
+            page_title = excluded.page_title,
+            page_description = excluded.page_description,
+            cached_at = excluded.cached_at
+        """,
+        payload,
+    )
+    connection.commit()
+
+
+def get_url_cache_entry(
+    connection: sqlite3.Connection,
+    original_url: str,
+) -> sqlite3.Row | None:
+    """Return a cached URL resolution when available."""
+    return connection.execute(
+        """
+        SELECT original_url, resolved_url, page_title, page_description, cached_at
+        FROM url_cache
+        WHERE original_url = ?
+        """,
+        (original_url,),
+    ).fetchone()
+
+
+def list_unenriched_bookmarks(
+    connection: sqlite3.Connection,
+) -> list[sqlite3.Row]:
+    """Return bookmarks that do not already have an enrichment row."""
+    return connection.execute(
+        """
+        SELECT b.*
+        FROM bookmarks AS b
+        LEFT JOIN enrichments AS e ON e.tweet_id = b.tweet_id
+        WHERE e.tweet_id IS NULL
+        ORDER BY b.first_seen_at, b.tweet_id
+        """
+    ).fetchall()
+
+
+def _migrate_enrichments_table(connection: sqlite3.Connection) -> None:
+    existing_columns = {
+        row[1] for row in connection.execute("PRAGMA table_info(enrichments)")
+    }
+    for column, column_type in ENRICHMENT_COLUMNS.items():
+        if column not in existing_columns:
+            connection.execute(
+                f"ALTER TABLE enrichments ADD COLUMN {column} {column_type}"
+            )
+
+
 def _to_json(value: Any) -> str:
+    if isinstance(value, str):
+        return value
+    return json.dumps(value)
+
+
+def _to_json_or_none(value: Any) -> str | None:
+    if value is None:
+        return None
     if isinstance(value, str):
         return value
     return json.dumps(value)

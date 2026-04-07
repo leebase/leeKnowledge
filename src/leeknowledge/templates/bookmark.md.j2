@@ -1,13 +1,69 @@
 ---
-tweet_id: "{{ tweet_id }}"
-author: "{{ author }}"
-author_name: "{{ author_name }}"
-date: "{{ date }}"
-url: "{{ url }}"
-topic: "{{ topic }}"
-tags: {{ tags }}
-entities: {{ entities }}
-summary: "{{ summary }}"
+tweet_id: {{ tweet_id | yaml_scalar }}
+author_username: {{ author_username | yaml_scalar }}
+author_display_name: {{ author_display_name | yaml_scalar }}
+created_at: {{ created_at | yaml_scalar }}
+conversation_id: {{ conversation_id | yaml_scalar }}
+in_reply_to_id: {{ in_reply_to_id | yaml_scalar }}
+topic: {{ topic | yaml_scalar }}
+{% if tags %}
+tags:
+{% for tag in tags %}  - {{ tag | yaml_scalar }}
+{% endfor %}
+{% else %}
+tags: []
+{% endif %}
+summary: {{ summary | yaml_scalar }}
+{% if entities %}
+entities:
+{% for entity in entities %}  - {{ entity | yaml_scalar }}
+{% endfor %}
+{% else %}
+entities: []
+{% endif %}
+{% if raw_urls %}
+raw_urls:
+{% for url in raw_urls %}  - {{ url | yaml_scalar }}
+{% endfor %}
+{% else %}
+raw_urls: []
+{% endif %}
+{% if resolved_urls %}
+resolved_urls:
+{% for url in resolved_urls %}  - {{ url | yaml_scalar }}
+{% endfor %}
+{% else %}
+resolved_urls: []
+{% endif %}
+{% if media_urls %}
+media_urls:
+{% for url in media_urls %}  - {{ url | yaml_scalar }}
+{% endfor %}
+{% else %}
+media_urls: []
+{% endif %}
+model: {{ model | yaml_scalar }}
+prompt_version: {{ prompt_version | yaml_scalar }}
+schema_version: {{ schema_version | yaml_scalar }}
+validation_status: {{ validation_status | yaml_scalar }}
+enriched_at: {{ enriched_at | yaml_scalar }}
 ---
 
+# {{ note_title }}
+
+{% if summary %}
+> {{ summary }}
+{% endif %}
+
+## Tweet
+
 {{ text }}
+
+## Resolved Links
+{% if resolved_links %}
+{% for entry in resolved_links %}- [{{ entry.page_title or entry.resolved_url }}]({{ entry.resolved_url }}){% if entry.page_description %} — {{ entry.page_description }}{% endif %}
+{% endfor %}{% else %}- None
+{% endif %}
+
+## Source
+- [View on X]({{ source_url }})

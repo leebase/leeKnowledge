@@ -8,7 +8,7 @@
 
 | Attribute | Value |
 |-----------|-------|
-| **Phase** | Phase 2 — Extraction |
+| **Phase** | Phase 4 — Export Hardening |
 | **Mode** | 2 (Implementation with approval) |
 | **Last Updated** | 2026-04-07 |
 
@@ -16,26 +16,36 @@
 | Sprint | Status | Completion |
 |--------|--------|------------|
 | Sprint 1 — Foundation | ✅ Complete | 100% |
-| Sprint 2 — Extraction Slice | 🟡 Active | 0% |
+| Sprint 2 — Extraction Slice | ✅ Complete | 100% |
+| Sprint 3 — Enrichment Slice | ✅ Complete | 100% |
+| Sprint 4 — Export Slice | ✅ Complete | 100% |
+| Sprint 5 — Export Hardening | 🟡 Active | 0% |
 
 ---
 
 ## What's Happening Now
 
 ### Current Work Stream
-Executing the first real delivery sprint: capture X bookmarks into immutable raw
-JSON and normalize them into SQLite without corrupting existing state.
+Sprint 4 has now been implemented end-to-end through Agent-Orch: `export` renders Markdown notes, `sync` runs the full pipeline, and the resumed workflow finished successfully under run `63e50cd3b7d9`. The next work is Sprint 5 hardening to fix the high-priority export review findings and re-run sign-off checks in a Python 3.12+ dev environment.
 
 ### Recently Completed
 - ✅ Project scaffolded with init-agent
 - ✅ AGENTS.md created
 - ✅ `product-definition.md`, `architecture.md`, and `project-plan.md` added
 - ✅ Phase 1 code scaffold aligned to documented package, CLI, and DB shape
+- ✅ Phase 1 baseline reconfirmed with `PYTHONPATH=src python3 -m leeknowledge --help`
 - ✅ Comprehensive sprint planning added for the next delivery slices
 - ✅ Project-specific support agents and delivery skills synthesized from research
+- ✅ Learned Agent-Orch currently lacks per-step primary model selection
+- ✅ Initial Agent-Orch roadmap playbook created for Sprint 2-4 execution
+- ✅ Sprint 2 extraction closeout docs aligned architecture, sprint status, context, and result review
+- ✅ Sprint 3 enrichment closeout docs aligned architecture, sprint status, context, and result review
+- ✅ Sprint 4 export and sync workflow completed under Agent-Orch resume run `63e50cd3b7d9`
+- ✅ Sprint 4 review captured three follow-up deficiencies in `code-reviews/review-2026-04-07.md`
+- ✅ Docs were re-synced from the stale “Sprint 4 planned” state to the actual implemented state
 
 ### In Progress
-- ⏳ Breaking the extraction phase into a safe, testable delivery slice
+- ⏳ Sprint 5 hardening plan is now the active work stream.
 
 ---
 
@@ -48,6 +58,9 @@ JSON and normalize them into SQLite without corrupting existing state.
 | Phase 1 CLI ships as stubs backed by a real DB scaffold | Keeps scope tight while enabling immediate testing and iteration | 2026-04-07 |
 | Local artifact directories stay untracked | Raw data, DB state, vault output, and LLM config should never be committed | 2026-04-07 |
 | Sprint execution follows thin vertical slices | Each sprint must end with a runnable, verifiable capability and updated handoff docs | 2026-04-07 |
+| Sprint 3 enrichment stores explicit model, prompt_version, and schema_version values | Keeps enrichment reruns traceable and protects against prompt/schema drift | 2026-04-07 |
+| Agent-Orch runs should treat `artifacts/`, `.agent-orch-scratch/`, `src/leeknowledge.egg-info/`, and `state/` as operational paths | Prevents orchestration noise and local state files from causing false validation retries | 2026-04-07 |
+| Sprint 4 is functionally implemented but not sign-off ready until Sprint 5 closes R001-R003 | The first export review found a read-only export bug, Markdown fidelity risk, and a missing-test-environment gap | 2026-04-07 |
 
 ---
 
@@ -61,6 +74,7 @@ JSON and normalize them into SQLite without corrupting existing state.
 | `architecture.md` | Technical structure and boundaries | ✅ Created |
 | `sprint-plan.md` | Tactical execution | ✅ Active |
 | `support-agents.md` | Specialist review and planning roles | ✅ Created |
+| `playbooks/roadmap-sprints.yaml` | Agent-Orch workflow for remaining roadmap sprints | ✅ Created |
 | `AGENTS.md` | AI agent guide, conventions, operational modes | ✅ Created |
 
 ### Session Memory (Dynamic)
@@ -79,9 +93,7 @@ JSON and normalize them into SQLite without corrupting existing state.
 
 ## Open Questions (keep short)
 
-1. Which Chrome profile path should extraction target by default?
-2. Should the vault default to this repo's `vault/` directory or an external Obsidian vault path?
-3. What prompt/model versioning strategy should the enricher store in SQLite?
+1. Should the vault default to this repo's `vault/` directory or an external Obsidian vault path?
 
 ---
 
@@ -89,10 +101,9 @@ JSON and normalize them into SQLite without corrupting existing state.
 
 | Rank | Action | Owner | Done When |
 |------|--------|-------|----------|
-| 1 | Create a Python 3.12 dev environment for runtime deps | Human+AI | `pip install -e ".[dev]"` succeeds under target runtime |
-| 2 | Decide local config defaults for Chrome profile and raw archive paths | Human+AI | Extraction config is explicit and documented |
-| 3 | Implement the extraction slice in `extractor.py` and `normalizer.py` | AI | Raw payloads are saved and canonical bookmark rows are inserted |
-| 4 | Test with a real logged-in X session | Human+AI | At least one successful raw archive and SQLite load exists |
+| 1 | Fix R002 export read-only integrity gap | AI | `export` fails clearly on a missing DB and never bootstraps or migrates SQLite state |
+| 2 | Fix R003 Markdown fidelity gap | AI | Tweet text, summaries, and resolved-link metadata render without altering note structure |
+| 3 | Re-run verification and review in the documented dev environment | Human+AI | Python 3.12+ dev env runs `PYTHONPATH=src pytest`, export/sync checks, and a clean follow-up review |
 
 ---
 

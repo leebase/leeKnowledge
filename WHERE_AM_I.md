@@ -12,8 +12,8 @@
 |-----------|-------|
 | **Project** | leeKnowledge |
 | **Profile** | Python Package |
-| **Current Phase** | Phase 2 — Extraction |
-| **Overall Status** | 🟡 Active build sprint |
+| **Current Phase** | Phase 4 — Export Hardening |
+| **Overall Status** | 🟡 MVP implemented, hardening active |
 | **Last Updated** | 2026-04-07 |
 
 ---
@@ -26,10 +26,12 @@
 
 | Criterion | Status | Notes |
 |-----------|--------|-------|
-| Extract bookmarks into raw JSON + SQLite | ⬜ Not started | Active Sprint 2 goal |
-| Enrich bookmarks with summaries and tags | ⬜ Not started | Planned Sprint 3 |
-| Export Markdown vault for Obsidian | ⬜ Not started | Planned Sprint 4 |
+| Extract bookmarks into raw JSON + SQLite | ✅ Done | Sprint 2 extraction slice is closed out |
+| Enrich bookmarks with summaries and tags | ✅ Done | Sprint 3 enrichment slice is closed out; rows store explicit model/prompt/schema versions |
+| Export Markdown vault for Obsidian | 🟡 Implemented, hardening needed | Sprint 4 ships `export`/`sync`, but Sprint 5 must fix read-only export behavior and Markdown escaping gaps |
 | Product and technical direction defined | ✅ Done | Product, architecture, and sprint plan are established |
+
+**MVP status:** the full pipeline now exists end-to-end, but sign-off is blocked by Sprint 5 hardening and a clean follow-up review.
 
 ### Current Phase Goals
 
@@ -37,7 +39,9 @@
 |------|--------|-------|
 | Define product vision and architecture | ✅ Done | Core docs added |
 | Establish runnable Phase 1 scaffold | ✅ Done | Package, CLI, DB, tests, and local artifact dirs aligned |
-| Capture and normalize first real bookmark payload | ⬜ Not started | Active Sprint 2 goal |
+| Capture and normalize first real bookmark payload | ✅ Done | Sprint 2 extraction slice is closed out |
+| Expand URLs and enrich captured bookmarks | ✅ Done | Sprint 3 enrichment slice is closed out and the rerun-safe enrichment contract is documented |
+| Render Markdown notes and wire `sync` end-to-end | ✅ Done | Sprint 4 implemented the exporter, note template, sync orchestration, and export tests |
 
 ---
 
@@ -46,9 +50,10 @@
 | Sprint | Focus | Status |
 |--------|-------|--------|
 | Sprint 1 — Foundation | Scaffolding, DB, and CLI baseline | ✅ Complete |
-| Sprint 2 — Extraction Slice | Raw archive + SQLite normalization | 🟡 Active |
-| Sprint 3 — Enrichment Slice | URL expansion + LLM enrichment | ⬜ Planned |
-| Sprint 4 — Export Slice | Markdown vault + `sync` | ⬜ Planned |
+| Sprint 2 — Extraction Slice | Raw archive + SQLite normalization | ✅ Complete |
+| Sprint 3 — Enrichment Slice | URL expansion + LLM enrichment | ✅ Complete |
+| Sprint 4 — Export Slice | Markdown vault + `sync` | ✅ Complete |
+| Sprint 5 — Export Hardening | Review findings, fidelity, and sign-off | 🟡 Active |
 
 ---
 
@@ -60,6 +65,8 @@
 | Chrome auth state is required locally | Extraction cannot run without active login | 🟡 Needs local setup |
 | LLM config is local-only and not yet created | Enrichment cannot run until configured | 🟡 Expected for later phase |
 | Local runtime is still Python 3.9.6 in this shell | Declared deps target Python 3.12+ | 🟡 Needs environment alignment |
+| Export currently bootstraps SQLite on missing DB | Can mask operator mistakes and break read-only expectations | 🔴 Sprint 5 blocker |
+| Markdown text is not yet escaped during export | Real bookmark text can distort rendered notes | 🟡 Sprint 5 fix queued |
 
 ---
 
@@ -78,8 +85,8 @@ Decisions that affect product direction (for technical decisions, see `architect
 
 ## What "Done" Looks Like
 
-- [ ] MVP criteria met
-- [ ] Lee can run `python -m leeknowledge sync` and produce a browsable Markdown vault
+- [ ] MVP criteria signed off after Sprint 5 hardening
+- [x] Lee can run `python -m leeknowledge sync` and produce a browsable Markdown vault
 - [ ] Documentation and runbooks are complete enough for future sessions to continue cleanly
 
 ---

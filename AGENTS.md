@@ -24,6 +24,13 @@ At the start of every session, in order:
 3. Check `result-review.md` — what was recently completed
 4. Read `sprint-plan.md` — current sprint tasks and priorities
 
+For broad sprint work, use Agent-Orch as the primary execution path:
+1. write or update a workflow under `playbooks/`
+2. validate it
+3. run it with Agent-Orch
+4. start the dashboard watcher
+5. report the workflow path, run id, and dashboard path
+
 ---
 
 ## Available Skills
@@ -114,6 +121,7 @@ The `Mode` field in `context.md` controls how independently you work:
 | `sprint-plan.md` | Every session start | When tasks complete |
 | `sprint-review.md` | After sprints | External AI fills in review |
 | `support-agents.md` | When specialized review/planning is needed | When agent roles change |
+| `playbooks/` | Before broad feature work or sprint execution | When workflows change |
 | `project-plan.md` | When direction unclear | Strategic changes only |
 | `product-definition.md` | When scope unclear | Product changes only |
 | `architecture.md` | When making tech decisions | When decisions are made |

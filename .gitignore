@@ -5,6 +5,9 @@ __pycache__/
 .venv/
 build/
 dist/
+.agent-orch-scratch/
+artifacts/
+src/leeknowledge.egg-info/
 
 .env
 config/llm.yaml

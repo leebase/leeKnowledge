@@ -42,8 +42,10 @@ Do not interrogate. If type and a usable topic are already clear, confirm in one
 ## Step 2 — Retrieve corpus evidence
 
 Follow `references/corpus-retrieval.md`. Derive FTS match terms from the framing, run the
-query, resolve note paths, and assemble an evidence list noting `broken_source_link` and
-`created_at`/`first_seen_at` (for staleness). If empty, flag the gap and continue research-led.
+query, resolve note paths, and assemble an evidence list noting `broken_source_link`. For
+staleness, prefer `created_at` (when the idea is from); fall back to `first_seen_at`
+(ingestion time) when `created_at` is null (~40 rows). If empty, flag the gap and continue
+research-led.
 
 ## Step 3 — Research
 
@@ -60,8 +62,10 @@ evidence and research. Apply the trust contract below to every substantive claim
 ## Step 5 — Save
 
 Write to `vault/briefs/strategic/<YYYY-MM-DD>-<type>-<slug>.md` (create the folder if
-missing; slug = kebab-cased topic). Populate frontmatter counts. Print the path and offer
-to revise. Never auto-send.
+missing; date is UTC and must match `generated_at`; slug = kebab-cased topic, ascii, max
+~60 chars). Populate frontmatter: `artifact_type`, `topic`, `generated_at` (UTC ISO),
+`framing`, `corpus_evidence_count`, `research_source_count`. Print the path and offer to
+revise. Never auto-send.
 
 ## Trust contract (non-negotiable)
 
@@ -74,6 +78,15 @@ Tag every substantive claim:
 No-fabrication: a claim not tied to corpus or a citation is dropped or marked
 `[interpretation]`. Numbers, vendor claims, and dates come only from `[research]` (cited)
 or `[corpus]` (linked) — never invented.
+
+Trail mapping (the Source trail must be verifiable against the body):
+- Every inline `[corpus]` claim has a matching entry under "From your corpus"; every
+  `[research:DATE]` claim under "From fresh research". Tag and trail are 1:1.
+- `[interpretation]` claims carry no citation but must still be summarized in the
+  "Interpretation" trail section.
+- When corpus and fresh research **corroborate** the same point, tag it `[research:DATE]`
+  (the current, citable source) and cross-reference the corpus note in the corpus trail —
+  do not manufacture a conflict. Reserve the conflict edge case for genuine disagreement.
 
 ## Edge handling
 

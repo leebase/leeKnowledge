@@ -3,10 +3,21 @@
 Retrieve ranked evidence from `state/app.db` for the framing's topic. No new code — run
 this `sqlite3` query directly.
 
+## Choosing FTS match terms
+
+Expand the framing topic into **3–6 OR-joined keyword stems** and prefer recall over
+precision (ranking + the N-cap winnow the result). Rules:
+- Include morphological variants explicitly — FTS5 does not stem: `agent OR agentic OR agents`.
+- Quote a multi-word phrase **only** when the phrase itself is the concept
+  (`"data platform"`); otherwise OR the words (`data OR platform`).
+- Example for "agentic coding platforms": `agent OR agentic OR agents OR orchestration OR coding`.
+
 ## Query
 
-Replace `QUERY` with FTS5 match terms derived from the framing (OR-join key terms, e.g.
-`agent OR agentic OR orchestration`). Replace `N` with the evidence cap (default 25).
+Replace `QUERY` with the OR-joined terms above. `N` is the **retrieval cap** (default 25) —
+a candidate pool to rank and winnow, NOT the number of items that land in the draft. A
+~1-page exec-update may cite only the top 3–5; a 2-page brief more. Always winnow to what
+the artifact's length target supports.
 
 ```bash
 sqlite3 -json state/app.db "
@@ -34,13 +45,22 @@ Lower `bm25` rank = more relevant (FTS5 returns ascending relevance). `ORDER BY 
 
 ## Resolve the vault note path for an evidence item
 
-Exported note filenames end with the lowercased `tweet_id`. Find the note path by globbing:
+The exporter names files `<text-slug>-<slugified-tweet_id>.md`, where the id suffix is the
+tweet_id **slugified**: lowercased with every non-`[a-z0-9]` character removed. Base64
+node-IDs therefore lose their trailing `=` and any `:` — a glob on the raw id will NOT
+match them (the exact ~38 rows the trust contract most needs to link).
+
+Derive the slug id, then resolve with `find` (layout-independent; do NOT rely on `vault/**`,
+which needs shell `globstar` that is off by default):
 
 ```bash
-ls vault/**/*<tweet_id-lowercased>*.md 2>/dev/null
+slug_id=$(printf '%s' "<tweet_id>" | tr 'A-Z' 'a-z' | tr -cd 'a-z0-9')
+find vault -name "*$slug_id*.md" -not -path 'vault/stories/*' | head -1
 ```
 
-Use that path for the `[corpus]` "Open note" link.
+`find` returns both the bookmark note (`vault/YYYY/MM/...`) and the story note
+(`vault/stories/...`); exclude `vault/stories/` and take the first match for the `[corpus]`
+"Open note" link.
 
 ## Broken source links
 

@@ -2,62 +2,68 @@
 
 ## Architectural Overview
 
-leeKnowledge is a **local-first, replayable pipeline** with four stages:
+leeKnowledge is a **local-first, replayable pipeline** with a stable downstream core and bounded source-intake entrypoints:
 
 ```
-Extract → Normalize → Enrich → Export
+Extract / Import → Normalize → Enrich → Export → Derived Views
 ```
 
 The stages are decoupled by SQLite. Each stage can be run independently and is idempotent. The one hard rule:
 
-> **Extraction is unstable. Everything downstream must be stable.**
+> **Source intake is unstable. Everything downstream must be stable.**
 
-The extractor is a replaceable module. If X changes its DOM or GraphQL schema tomorrow, only the extractor changes. Normalization, enrichment, and export never know or care how the data arrived.
+Sprint 9 is the verified leadership-feature baseline. Sprint 10 is now shipped and extends the intake edge from X-only extraction to a small source-agnostic intake surface (`extract`, `import-url`, `import-safari-folder`, `import-research`) without forcing downstream commands to branch on source-specific behavior.
+
+The intake layer is replaceable at the edges. If X changes its DOM or GraphQL schema tomorrow, or a bounded non-X parser needs repair, only the relevant intake path changes. Normalization, enrichment, export, and derived views should consume the same canonical-row semantics regardless of how the data arrived.
 
 ---
 
 ## Design Principles
 
-1. **Raw before smart** — Persist source JSON before parsing, deduplicating, or enriching.
-2. **Simple that works** — No adapter abstractions, no run manifests, no observation models. One extractor, one database, one template.
-3. **Replayable stages** — Re-enrich or re-export from SQLite without re-extracting from X.
-4. **LLM enriches, never validates** — Extraction correctness comes from tweet IDs and structured data, not AI guesses.
+1. **Raw before smart** — Persist source JSON or source import artifacts before parsing, deduplicating, or enriching.
+2. **Simple that works** — Keep intake bounded to explicit commands and one shared canonical-row contract. No general connector framework, no run manifests, no observation models.
+3. **Replayable stages** — Re-enrich or re-export from SQLite without re-running source intake.
+4. **LLM enriches, never validates** — Canonical source identity comes from deterministic normalization, not AI guesses.
 5. **Local-first** — Everything runs on a laptop. No cloud services required.
-6. **Dedup downstream** — At 200 bookmarks, re-extract everything each run and let SQLite dedup by tweet ID. Simpler than incremental extraction.
+6. **Dedup downstream** — X keeps legacy `tweet_id` compatibility; mixed-source intake deduplicates on explicit canonical source identity.
 
 ---
 
 ## System Context
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                      macOS Laptop                        │
-│                                                          │
-│  ┌───────────┐    ┌────────────────────────────────┐     │
-│  │  Chrome    │    │       leeKnowledge CLI         │     │
-│  │ (profile)  │───▶│  extract / enrich / export /   │     │
-│  └───────────┘    │  sync                          │     │
-│                   └──────────┬─────────────────────┘     │
-│                              │                           │
-│            ┌─────────────────▼──────────────────┐        │
-│            │         SQLite Database             │        │
-│            │  bookmarks | enrichments | urls     │        │
-│            └─────────────────┬──────────────────┘        │
-│                              │                           │
-│            ┌─────────────────▼──────────────────┐        │
-│            │       Vault (Markdown files)        │        │
-│            │  vault/2025/03/slug-tweetid.md      │        │
-│            └────────────────────────────────────┘        │
-│                                                          │
-│            ┌────────────────────────────────────┐        │
-│            │  data/raw/bookmarks_2026-04-07.json │        │
-│            │  (immutable extraction archive)     │        │
-│            └────────────────────────────────────┘        │
-└──────────────────────────────────────────────────────────┘
-         │                              │
-         ▼                              ▼
-   x.com/i/bookmarks            pi CLI (openai-codex)
-   (Playwright session)         via lee-llm-router
+┌─────────────────────────────────────────────────────────────────────┐
+│                           macOS Laptop                             │
+│                                                                     │
+│  ┌───────────────┐   ┌───────────────────────────────────────────┐  │
+│  │ Source inputs │──▶│             leeKnowledge CLI              │  │
+│  │ X / URLs /    │   │ extract / import-* / enrich / export /    │  │
+│  │ Safari /      │   │ topics / metadata / synthesize /          │  │
+│  │ research      │   │ collections / sync                        │  │
+│  └───────────────┘   └──────────────────┬────────────────────────┘  │
+│                                         │                           │
+│                    ┌────────────────────▼────────────────────┐      │
+│                    │            SQLite Database               │      │
+│                    │ bookmarks | enrichments | urls |        │      │
+│                    │ leadership_metadata                     │      │
+│                    └────────────────────┬────────────────────┘      │
+│                                         │                           │
+│                    ┌────────────────────▼────────────────────┐      │
+│                    │         Vault (Markdown files)           │      │
+│                    │ source notes + topics + briefs +        │      │
+│                    │ collections                             │      │
+│                    └─────────────────────────────────────────┘      │
+│                                                                     │
+│                    ┌─────────────────────────────────────────┐      │
+│                    │ data/raw/*                              │      │
+│                    │ immutable source snapshots before       │      │
+│                    │ normalization                           │      │
+│                    └─────────────────────────────────────────┘      │
+└─────────────────────────────────────────────────────────────────────┘
+         │                                         │
+         ▼                                         ▼
+   X Playwright session                     pi CLI (openai-codex)
+   or bounded local import                  via lee-llm-router
 ```
 
 ---
@@ -70,12 +76,19 @@ Python CLI using Typer. Current command state:
 
 | Command | What it does |
 |---------|-------------|
-| `extract` | Completed Sprint 2 extraction slice: capture raw bookmark payloads, write the archive, normalize, and insert SQLite rows |
+| `extract` | Completed Sprint 2 X-specific extraction slice: capture raw bookmark payloads, write the archive, normalize, and insert SQLite rows |
+| `import-url` | Completed Sprint 10 command for bounded direct-URL intake into the shared normalization path |
+| `import-safari-folder` | Completed Sprint 10 command for Safari bookmark export/folder intake into the shared normalization path |
+| `import-research` | Completed Sprint 10 command for bounded research-artifact intake into the shared normalization path |
 | `enrich` | Completed Sprint 3 enrichment slice: URL expansion, optional page metadata fetch, structured enrichment, and rerun-safe storage |
 | `export` | Completed Sprint 4 command: render Markdown vault notes from SQLite |
-| `sync` | Completed Sprint 4 command: run extract → enrich → export in sequence |
+| `topics` | Completed Sprint 6 command: render deterministic topic-index notes from local state |
+| `metadata` | Completed Sprint 8 command: generate leadership metadata rows from local state |
+| `synthesize` | Completed Sprint 7 command: generate weekly leadership briefs from local state |
+| `collections` | Completed Sprint 9 command: render initiative-centered collection notes from local state |
+| `sync` | Completed X-path orchestration: run extract → enrich → export in sequence |
 
-All four pipeline commands now exist end-to-end. Sprint 5 hardened the export path so it validates SQLite read-only instead of bootstrapping missing state, and so Markdown-sensitive content is rendered in a source-faithful way.
+The shipped downstream commands remain source-agnostic by contract. Sprint 10 broadens intake while preserving the existing enrichment, export, topic, metadata, synthesis, and collection behavior.
 
 ### 2. Extractor (`src/leeknowledge/extractor.py`)
 
@@ -115,20 +128,41 @@ Playwright script that owns browser access and raw capture only.
 - No proxy rotation (single personal account, low frequency).
 - Run at most weekly.
 
+### 2a. Intake adapters (Sprint 10 shipped boundary)
+
+Sprint 10 broadens intake without changing the downstream pipeline contract.
+
+**Shared intake boundary**
+- `extract` remains the X-specific Playwright path.
+- `import-url`, `import-safari-folder`, and `import-research` are bounded local import commands, not a general connector system.
+- Every intake path must write one immutable raw snapshot before normalization begins.
+- Every accepted normalized row must resolve one stable identity tuple: `source_name`, `source_type`, `source_item_id`, `source_ref`, plus `tweet_id` for legacy X compatibility when applicable.
+- Unknown adapter-specific fields stay in raw/quarantine payloads instead of being guessed into canonical fields.
+
+**Adapter acceptance intent**
+- `import-url`: one explicit URL per input item; identity comes from the canonicalized absolute URL.
+- `import-safari-folder`: one Safari bookmark item per parsed export record; identity comes from folder lineage plus canonicalized bookmark URL.
+- `import-research`: one accepted record per artifact row/item; identity comes from artifact identity plus stable per-record locator.
+
+**Downstream rule**
+- Once a row is normalized, enrichment, export, topics, metadata, synthesis, and collections should not need to care whether it came from X extraction or a bounded non-X import path.
+
 ### 3. Normalizer (`src/leeknowledge/normalizer.py`)
 
 Transforms raw captured archives into canonical SQLite records:
-- Reads only the archived raw capture format produced by the extractor.
-- Extracts the canonical bookmark fields required by the current schema: `tweet_id`, `text`, `author_username`, `author_display_name`, `created_at`, `conversation_id`, `in_reply_to_id`, `media_urls`, `raw_urls`, and `first_seen_at`.
-- Treats `tweet_id` as the only identity key and uses `INSERT OR IGNORE` for reruns.
-- Skips or quarantines records that do not have a stable `tweet_id` or cannot satisfy the required SQLite shape; the extractor is never asked to repair them.
+- Reads only archived raw capture/import formats produced by the intake layer.
+- Extracts the canonical bookmark fields required by the shared schema: `tweet_id`, `source_name`, `source_type`, `source_item_id`, `source_ref`, `text`, `author_username`, `author_display_name`, `created_at`, `conversation_id`, `in_reply_to_id`, `media_urls`, `raw_urls`, and `first_seen_at`.
+- Preserves X compatibility by mapping X rows to `source_name=x`, `source_type=x_bookmark`, `source_item_id=<tweet_id>`, while keeping `tweet_id` as the legacy compatibility key.
+- Requires non-X rows to provide `source_name`, `source_type`, `source_item_id`, and `source_ref` together, with downstream compatibility through `canonical_item_id = tweet_id` for X rows and `<source_name>:<source_type>:<source_item_id>` otherwise.
+- Uses deterministic identity derivation from raw input alone and rerun-safe inserts keyed by the shared canonical identity contract.
+- Skips or quarantines records that cannot satisfy the required identity and schema shape; the intake layer is never asked to repair them heuristically.
 - Defers URL expansion and page-metadata fetch to later pipeline stages; normalization stays deterministic and replayable.
 
 **Normalization rules:**
 - Normalization is deterministic and must not depend on browser state or LLM output.
 - Source payloads remain the provenance record; canonical rows are derived, not authoritative.
 - Missing optional fields are allowed if the canonical SQLite schema can represent them.
-- Missing required fields must fail explicitly instead of being silently guessed.
+- Missing required source-identity fields must fail explicitly instead of being silently guessed.
 
 ### 4. Enricher (`src/leeknowledge/enricher.py`)
 
@@ -206,15 +240,16 @@ Current implementation: reads bookmarks + enrichments from SQLite, renders Markd
 
 **Vault and path contract**
 - Default vault root is the repo-local `vault/` directory.
-- The vault root may be overridden by `--vault-dir` or `LEEKNOWLEDGE_VAULT_DIR`; export must not depend on X, Chrome, or the LLM.
-- Notes are written under `vault/YYYY/MM/<slug>-<tweet_id>.md`, where `YYYY/MM` comes from `created_at` when available and falls back to `first_seen_at`.
-- `slug` is derived deterministically from the tweet text or author/text combo, lowercased and hyphenated; if no stable slug can be formed, fall back to `tweet-<tweet_id>`.
+- The vault root may be overridden by `--vault-dir` or `LEEKNOWLEDGE_VAULT_DIR`; export must not depend on source-specific intake state, Chrome, or the LLM.
+- X rows keep the shipped note-path contract under `vault/YYYY/MM/<slug>-<tweet_id>.md` so Sprint 9 remains the stable closeout baseline.
+- Non-X rows should use the same date-partitioned vault layout but derive a stable path from the shared canonical identity rather than forcing fake tweet IDs.
+- `slug` is derived deterministically from visible source text or equivalent human-readable context; if no stable slug can be formed, fall back to the canonical identity.
 - Reruns must be idempotent at the file level: the same source row yields the same path, and the exporter replaces the existing file atomically instead of creating a conflicting duplicate.
 - Export validates the SQLite path and required schema read-only before querying. Missing files or stale schemas fail with readable errors instead of being created or migrated during export.
 
 **Markdown note contract**
-- YAML frontmatter must preserve the source identity and enrichment provenance: `tweet_id`, `author_username`, `author_display_name`, `created_at`, `topic`, `tags`, `summary`, `entities`, `raw_urls`, `resolved_urls`, `model`, `prompt_version`, `schema_version`, `validation_status`, and `enriched_at`.
-- The body must keep the tweet text visible as source content, followed by any resolved links or references, and end with a link back to the original tweet.
+- YAML frontmatter must preserve source identity and enrichment provenance, including `tweet_id`, `source_name`, `source_type`, `source_item_id`, `source_ref`, `author_username`, `author_display_name`, `created_at`, `topic`, `tags`, `summary`, `entities`, `raw_urls`, `resolved_urls`, `model`, `prompt_version`, `schema_version`, `validation_status`, and `enriched_at`.
+- The body must keep source text visible, followed by any resolved links or references, and end with the most specific available source backlink (X status URL for X rows, otherwise source reference material).
 - Missing enrichment data should remain visible as null or empty fields rather than being fabricated.
 - Jinja2 templates own the formatting; the template output must stay source-grounded and readable in plain text or Obsidian.
 - Tweet text and summaries render inside fenced `text` blocks so source content stays literal.
@@ -246,7 +281,12 @@ Current implementation: reads bookmarks + enrichments from SQLite, renders Markd
 
 ```sql
 CREATE TABLE bookmarks (
-    tweet_id TEXT PRIMARY KEY,
+    tweet_id TEXT UNIQUE,
+    source_name TEXT NOT NULL,
+    source_type TEXT NOT NULL,
+    source_item_id TEXT NOT NULL,
+    source_ref TEXT NOT NULL,
+    canonical_item_id TEXT PRIMARY KEY,
     text TEXT NOT NULL,
     author_username TEXT,
     author_display_name TEXT,
@@ -254,12 +294,13 @@ CREATE TABLE bookmarks (
     conversation_id TEXT,
     in_reply_to_id TEXT,
     media_urls TEXT,            -- JSON array
-    raw_urls TEXT,              -- JSON array of t.co URLs
+    raw_urls TEXT,              -- JSON array
     first_seen_at TIMESTAMP NOT NULL
 );
 
 CREATE TABLE enrichments (
-    tweet_id TEXT PRIMARY KEY,
+    canonical_item_id TEXT PRIMARY KEY,
+    tweet_id TEXT UNIQUE,
     summary TEXT,
     tags TEXT,                  -- JSON array
     entities TEXT,              -- JSON array
@@ -269,7 +310,7 @@ CREATE TABLE enrichments (
     schema_version TEXT,
     validation_status TEXT,
     enriched_at TIMESTAMP,
-    FOREIGN KEY (tweet_id) REFERENCES bookmarks(tweet_id)
+    FOREIGN KEY (canonical_item_id) REFERENCES bookmarks(canonical_item_id)
 );
 
 CREATE TABLE url_cache (
@@ -281,9 +322,15 @@ CREATE TABLE url_cache (
 );
 ```
 
+**Schema intent for Sprint 10**
+- X rows keep `tweet_id` populated and derive `canonical_item_id = tweet_id`.
+- Non-X rows may leave `tweet_id` null but must populate `source_name`, `source_type`, `source_item_id`, `source_ref`, and `canonical_item_id`.
+- `canonical_item_id` is the shared downstream join/dedupe key; `tweet_id` remains the legacy X-compatibility field.
+
 **FTS5 index for full-text search:**
 ```sql
 CREATE VIRTUAL TABLE bookmarks_fts USING fts5(
+    canonical_item_id,
     tweet_id,
     text,
     author_username,
@@ -328,7 +375,12 @@ leeKnowledge/
 
 ```markdown
 ---
+canonical_item_id: "1234567890"
 tweet_id: "1234567890"
+source_name: "x"
+source_type: "x_bookmark"
+source_item_id: "1234567890"
+source_ref: "https://x.com/username/status/1234567890"
 author_username: "username"
 author_display_name: "Display Name"
 created_at: "2025-03-15T12:34:56Z"
@@ -356,7 +408,7 @@ enriched_at: "2025-03-16T08:00:00Z"
 
 > Karpathy argues that RLHF is fundamentally misaligned...
 
-[Full tweet text rendered here]
+[Full source text rendered here]
 
 ## Resolved Links
 - [Article Title](https://example.com/article)
@@ -369,26 +421,33 @@ enriched_at: "2025-03-16T08:00:00Z"
 
 ## Pipeline Data Flow
 
-### Stage 1: Extract
+### Stage 1: Extract / Import
 ```
-Chrome (logged in) → Playwright → GraphQL interception → raw archive
+X Playwright extraction or bounded local import command
+→ immutable raw snapshot
 ```
 
 ### Stage 2: Normalize
 ```
-Raw archive → deterministic parser → canonical bookmark rows
-           → dedup by tweet_id → SQLite bookmarks table
+Raw snapshot → deterministic parser → canonical bookmark rows
+             → dedup by canonical_item_id with tweet_id compatibility for X
+             → SQLite bookmarks table
 ```
 
 ### Stage 3: Enrich
 ```
-Un-enriched bookmarks → URL resolution + optional metadata fetch + cache → prompt builder → lee-llm-router (pi/openai-codex)
-                                                               → validated enrichment row
+Un-enriched canonical rows → URL resolution + optional metadata fetch + cache → prompt builder → lee-llm-router (pi/openai-codex)
+                                                                      → validated enrichment row
 ```
 
 ### Stage 4: Export
 ```
-bookmarks + enrichments → Jinja2 template → vault/YYYY/MM/<slug>-<id>.md
+bookmarks + enrichments → Jinja2 template → stable source-note path
+```
+
+### Stage 5: Derived Views
+```
+source notes + SQLite state → topics / metadata / synthesize / collections
 ```
 
 ---
@@ -399,14 +458,15 @@ bookmarks + enrichments → Jinja2 template → vault/YYYY/MM/<slug>-<id>.md
 |---------|----------|
 | Not logged in to X | Playwright detects redirect to login page, aborts with clear message |
 | GraphQL interception yields nothing | Abort the extract run and leave the database unchanged |
+| Import input cannot be opened or parsed at all | Stop before SQLite mutation after reporting the adapter-specific read/parse error |
 | Scroll stalls (no new bookmark payloads) | Retry until five consecutive polls yield nothing, then stop after persisting the archive |
-| Raw archive write fails | Stop before SQLite mutation; do not partially normalize |
-| Normalizer cannot produce a required canonical field | Skip or quarantine the bad record and report it explicitly |
+| Raw snapshot write fails | Stop before SQLite mutation; do not partially normalize |
+| Normalizer cannot produce required source identity | Quarantine or reject the bad record explicitly; do not guess canonical rows |
+| Duplicate canonical identity on rerun | Treat as expected idempotent behavior |
 | URL expansion timeout | Store the original URL, continue |
 | Page metadata fetch fails | Keep null title/description fields and continue |
 | LLM enrichment fails for one bookmark | Log warning, store a null enrichment placeholder, continue with rest |
 | LLM returns malformed JSON | Log warning, store a null enrichment placeholder, do not invent values |
-| SQLite insert conflict (duplicate) | INSERT OR IGNORE — this is expected behavior on reruns |
 
 ---
 
@@ -438,9 +498,9 @@ bookmarks + enrichments → Jinja2 template → vault/YYYY/MM/<slug>-<id>.md
 
 ## Explicit Decisions
 
-1. **No adapter abstractions.** One extractor. If it breaks, fix it. Don't pre-build for extractors that don't exist.
-2. **No observation/run model.** Dedup by tweet ID is sufficient at this scale. No need to track first_seen/last_seen per run.
-3. **No vector search.** Obsidian's built-in search handles 200 items fine.
+1. **No general connector framework.** Keep intake bounded to the shipped X extractor plus explicit Sprint 10 import commands. If one path breaks, fix that path without inventing a broad plugin system.
+2. **No observation/run model.** Source identity and canonical-row dedupe are sufficient at this scale. No need to track first_seen/last_seen per run beyond existing row timestamps.
+3. **No vector search.** Obsidian's built-in search handles this corpus size fine.
 4. **No cloud anything.** Local SQLite, local files, local LLM calls via pi.
-5. **Re-extract everything on each run.** At 200 bookmarks, full re-extraction is faster than building incremental logic. Dedup happens in SQLite.
-6. **Enrichment is separate from export.** You can re-export without re-enriching, and re-enrich without re-extracting.
+5. **X note-path compatibility is preserved.** Sprint 9 remains the verified closeout baseline, so X keeps `tweet_id`-based identity and note-path behavior while non-X intake joins through `canonical_item_id`.
+6. **Enrichment and derived views stay separate from intake.** You can re-export, re-topic, re-score metadata, resynthesize, or rebuild collections without re-running source intake.

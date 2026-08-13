@@ -1,0 +1,7 @@
+collections:
+  - initiative_slug: not_kebab
+    title: Broken
+    status: active-now
+    leadership_question: Broken question
+    scope_note: Broken scope
+    max_items: 20

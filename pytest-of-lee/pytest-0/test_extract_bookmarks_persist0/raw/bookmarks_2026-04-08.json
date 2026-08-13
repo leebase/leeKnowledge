@@ -1,0 +1,71 @@
+{
+  "version": "0.1.0",
+  "captured_at": "2026-04-08T19:45:49Z",
+  "source": {
+    "bookmarks_url": "https://x.com/i/bookmarks",
+    "chrome_profile_dir": "/Users/lee/projects/leeKnowledge/pytest-of-lee/pytest-0/test_extract_bookmarks_persist0/chrome",
+    "headless": false
+  },
+  "bookmark_payloads": [
+    {
+      "payload": {
+        "data": {
+          "bookmark_timeline": {
+            "timeline": {
+              "instructions": [
+                {
+                  "type": "TimelineAddEntries",
+                  "entries": [
+                    {
+                      "entryId": "tweet-456",
+                      "content": {
+                        "entryType": "TimelineTimelineItem",
+                        "itemContent": {
+                          "itemType": "TimelineTweet",
+                          "tweet_results": {
+                            "result": {
+                              "rest_id": "456",
+                              "legacy": {
+                                "full_text": "A useful bookmark",
+                                "created_at": "Mon Apr 07 09:00:00 +0000 2026",
+                                "conversation_id_str": "456",
+                                "in_reply_to_status_id_str": null,
+                                "entities": {
+                                  "urls": [
+                                    {
+                                      "url": "https://t.co/example",
+                                      "expanded_url": "https://example.com/article"
+                                    }
+                                  ],
+                                  "media": [
+                                    {
+                                      "media_url_https": "https://pbs.twimg.com/media/example.jpg"
+                                    }
+                                  ]
+                                }
+                              },
+                              "core": {
+                                "user_results": {
+                                  "result": {
+                                    "legacy": {
+                                      "screen_name": "lee",
+                                      "name": "Lee Harrington"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

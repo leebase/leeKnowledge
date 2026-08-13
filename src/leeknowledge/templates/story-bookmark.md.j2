@@ -1,0 +1,53 @@
+tweet_id: {{ tweet_id | yaml_scalar }}
+source_name: {{ source_name | yaml_scalar }}
+source_type: {{ source_type | yaml_scalar }}
+source_item_id: {{ source_item_id | yaml_scalar }}
+source_ref: {{ source_ref | yaml_scalar }}
+author_username: {{ author_username | yaml_scalar }}
+author_display_name: {{ author_display_name | yaml_scalar }}
+created_at: {{ created_at | yaml_scalar }}
+conversation_id: {{ conversation_id | yaml_scalar }}
+in_reply_to_id: {{ in_reply_to_id | yaml_scalar }}
+story_source_label: {{ story_source_label | yaml_scalar }}
+story_url: {{ story_url | yaml_scalar }}
+story_content_type: {{ story_fallback | yaml_scalar }}
+note_date: {{ note_date | yaml_scalar }}
+
+{% if raw_urls %}raw_urls:
+{% for url in raw_urls %}  - {{ url | yaml_scalar }}
+{% endfor %}{% else %}raw_urls: []
+{% endif %}
+{% if resolved_urls %}resolved_urls:
+{% for url in resolved_urls %}  - {{ url | yaml_scalar }}
+{% endfor %}{% else %}resolved_urls: []
+{% endif %}
+{% if media_urls %}media_urls:
+{% for url in media_urls %}  - {{ url | yaml_scalar }}
+{% endfor %}{% else %}media_urls: []
+{% endif %}
+
+# {{ note_title }}
+
+## Tweet text
+
+```text
+{{ text }}
+```
+
+{% if story_source_label != "Tweet text" %}
+## Story content
+
+```text
+{{ story_content }}
+```
+{% else %}
+## Story content
+
+No usable article content was extracted from the source URL for this bookmark.
+{% endif %}
+
+## Links
+{% if story_url %}- [{{ story_source_label }}]({{ story_url }})
+{% else %}- {{ story_fallback | default('Tweet text fallback') }}
+{% endif %}{% if source_url and source_label %}- [{{ source_label }}]({{ source_url }}){% endif %}{% for entry in resolved_links %}{% if entry.resolved_url != story_url %}- URL: [{{ entry.resolved_url }}]({{ entry.resolved_url }}){% if entry.page_title %} | Title: {{ entry.page_title | markdown_escape }}{% endif %}{% if entry.page_description %} | Description: {{ entry.page_description | markdown_escape }}{% endif %}{% endif %}
+{% endfor %}

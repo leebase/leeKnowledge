@@ -1,0 +1,20 @@
+{
+  "imported_at": "2026-04-08T19:45:49Z",
+  "adapter": "import-research",
+  "source": {
+    "input_path": "/Users/lee/projects/leeKnowledge/pytest-of-lee/pytest-0/test_import_research_artifact_0/research.csv",
+    "suffix": ".csv"
+  },
+  "items": [
+    {
+      "title": "Research note",
+      "summary": "Useful summary",
+      "url": "https://example.com/research"
+    },
+    {
+      "title": "",
+      "summary": "",
+      "url": ""
+    }
+  ]
+}

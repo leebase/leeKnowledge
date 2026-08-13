@@ -8,7 +8,7 @@
 
 ## Project Overview
 
-**leeKnowledge** is a personal pipeline that extracts X/Twitter bookmarks, enriches them with LLM-generated metadata, and produces a durable Markdown knowledge base.
+**leeKnowledge** is a personal, local-first bookmark-to-knowledge pipeline that now has an MVP-complete core: extract X/Twitter bookmarks, preserve raw captures, normalize into SQLite, enrich with LLM metadata, and export a durable Markdown vault. The next roadmap layer is leadership signal processing built on top of that existing corpus.
 
 The philosophy is **Incremental Delivery**:
 
@@ -25,6 +25,7 @@ Convert ~100-200 personal X bookmarks into a searchable, tagged, summarized Mark
 - Preserve raw extraction data so processing can be replayed without re-scraping.
 - Support periodic rerun: new bookmarks are added, existing ones are untouched.
 - Use existing ChatGPT subscription (via pi harness / lee-llm-router) for LLM enrichment at zero marginal cost.
+- Turn the resulting corpus into leadership-oriented derived artifacts such as topic notes and synthesis briefs.
 
 ---
 
@@ -41,13 +42,13 @@ Convert ~100-200 personal X bookmarks into a searchable, tagged, summarized Mark
 
 ### Phase 0 — Research / Bootstrap
 
-**Status**: COMPLETE
+**Status**: ✅ Complete
 
 **Goals**:
 - Research extraction strategies across multiple AI assistants.
 - Converge on a product definition and architecture.
 
-**Deliverables**:
+**Delivered**:
 - `research/` — four independent research outputs (ChatGPT, Claude, Gemini, Grok).
 - `product-definition.md` — synthesized product spec.
 - `architecture.md` — technical architecture.
@@ -55,127 +56,115 @@ Convert ~100-200 personal X bookmarks into a searchable, tagged, summarized Mark
 
 ---
 
-### Phase 1 — Project Scaffolding + Database
+### Phase 1 — Foundation / Scaffolding
 
-**Goal**: Runnable Python project with SQLite schema and CLI skeleton.
+**Status**: ✅ Complete
 
-**Core components**:
-1. Python project structure with pyproject.toml.
-2. SQLite database with schema (bookmarks, enrichments, url_cache, FTS5 index).
-3. Typer CLI with stub commands (extract, enrich, export, sync).
+**Goal**: Establish the runnable project scaffold, SQLite schema, CLI, tests, and local artifact conventions.
 
-**Tasks**:
-- [ ] 1.1 Initialize pyproject.toml (deps: typer, playwright, pydantic, httpx, jinja2, pyyaml, lee-llm-router)
-- [ ] 1.2 Create directory structure: `src/leeknowledge/`, `config/`, `data/raw/`, `state/`, `vault/`, `tests/`
-- [ ] 1.3 Create `db.py` — SQLite connection, schema creation, dedup insert helper
-- [ ] 1.4 Create `cli.py` — Typer app with stub commands
-- [ ] 1.5 Create `__main__.py` entry point
-- [ ] 1.6 Write tests: DB creation, schema validation, insert + dedup
-- [ ] 1.7 Set up .gitignore (data/, state/, config/llm.yaml, .env)
+**Delivered**:
+- Python package structure under `src/leeknowledge/`
+- SQLite bootstrap and schema helpers
+- CLI entrypoints for `extract`, `enrich`, `export`, `sync`, and `db`
+- Baseline tests for DB initialization and dedup behavior
+- Local-only artifact directory conventions and ignore rules
 
-**Success Criteria**:
-- `python -m leeknowledge --help` prints all four commands.
-- Tests pass for database creation and dedup behavior.
+**Exit Criteria Met**:
+- `PYTHONPATH=src python3 -m leeknowledge --help`
+- Baseline database and dedup tests passed during delivery
 
 ---
 
-### Phase 2 — Extraction
+### Phase 2 — Extraction Slice
 
-**Goal**: Playwright extracts all bookmarks from X, saves raw JSON, normalizes to SQLite.
+**Status**: ✅ Complete
 
-**Components**:
-1. `extractor.py` — Playwright automation with GraphQL interception.
-2. `normalizer.py` — Raw JSON parsing into canonical SQLite records.
-3. DOM fallback extractor for when GraphQL fails.
+**Goal**: Capture X bookmarks into immutable raw archives and normalize canonical bookmark rows into SQLite.
 
-**Tasks**:
-- [ ] 2.1 Install Playwright and Chromium
-- [ ] 2.2 Create `extractor.py` — Chrome launch with user profile, navigate to bookmarks
-- [ ] 2.3 Implement GraphQL response interception (filter `Bookmarks` in URL)
-- [ ] 2.4 Implement scroll loop with randomized delays, stop after 5 no-new-content retries
-- [ ] 2.5 Implement auth check — detect login redirect, abort with clear message
-- [ ] 2.6 Save raw JSON to `data/raw/bookmarks_YYYY-MM-DD.json`
-- [ ] 2.7 Create `normalizer.py` — parse GraphQL payload into bookmark records
-- [ ] 2.8 Extract fields: tweet_id, text, author, timestamp, conversation_id, media_urls, raw_urls
-- [ ] 2.9 SQLite insert with dedup (INSERT OR IGNORE)
-- [ ] 2.10 Wire `extract` CLI command end-to-end
-- [ ] 2.11 Implement DOM fallback extractor
-- [ ] 2.12 Test with real account: verify count, spot-check 10 bookmarks
-- [ ] 2.13 Test rerun: verify no duplicates on second extraction
+**Delivered**:
+- Chrome-profile Playwright extraction flow
+- Authentication checks for `x.com/i/bookmarks`
+- GraphQL bookmark capture and immutable raw archive persistence
+- Deterministic normalization and SQLite inserts with tweet-id dedup
+- End-to-end `extract` CLI wiring and extraction-focused tests
 
-**Success Criteria**:
-- `python -m leeknowledge extract` captures all bookmarks to SQLite.
-- Raw JSON preserved in `data/raw/`.
-- Second run produces zero new inserts.
+**Exit Criteria Met**:
+- `extract` captures bookmark payloads, writes raw archives first, and normalizes into SQLite
+- Reruns do not duplicate bookmark rows
 
 ---
 
-### Phase 3 — URL Expansion + Enrichment
+### Phase 3 — Enrichment Slice
 
-**Goal**: Expand short URLs, enrich bookmarks with LLM summaries and tags.
+**Status**: ✅ Complete
 
-**Components**:
-1. URL expansion with caching.
-2. LLM enrichment via lee-llm-router (pi harness, openai-codex).
+**Goal**: Expand URLs, fetch best-effort metadata, and persist one validated enrichment row per bookmark.
 
-**Tasks**:
-- [ ] 3.1 URL expansion: httpx HEAD follow-redirects, cache in url_cache table
-- [ ] 3.2 Page title/description fetch (best-effort, 5s timeout)
-- [ ] 3.3 Create `config/llm.yaml` for lee-llm-router
-- [ ] 3.4 Create `enricher.py` — query un-enriched bookmarks, build prompts, call router
-- [ ] 3.5 Design enrichment prompt → structured JSON (summary, tags, entities, topic)
-- [ ] 3.6 Handle malformed LLM responses gracefully (log + skip)
-- [ ] 3.7 Store enrichments in SQLite (tweet_id, summary, tags, entities, topic, model, enriched_at)
-- [ ] 3.8 Wire `enrich` CLI command
-- [ ] 3.9 Test: only un-enriched bookmarks are processed on rerun
-- [ ] 3.10 Test: malformed LLM output doesn't crash pipeline
+**Delivered**:
+- URL cache resolution and optional metadata fetch
+- `config/llm.yaml`-driven enrichment routing through lee-llm-router
+- Structured JSON validation with null-placeholder fallback behavior
+- Versioned enrichment storage (`model`, `prompt_version`, `schema_version`, `validation_status`)
+- End-to-end `enrich` CLI wiring and rerun-safe enrichment tests
 
-**Success Criteria**:
-- `python -m leeknowledge enrich` enriches all bookmarks.
-- Reruns skip already-enriched items.
-- Failures are logged, not fatal.
+**Exit Criteria Met**:
+- `enrich` processes only bookmarks without enrichment rows
+- Validation failures are stored explicitly without corrupting source data
 
 ---
 
-### Phase 4 — Export + Polish
+### Phase 4 — Export MVP + Hardening
 
-**Goal**: Generate Markdown vault, wire sync command, validate end-to-end.
+**Status**: ✅ Complete
 
-**Components**:
-1. Jinja2 Markdown template with YAML frontmatter.
-2. Exporter that reads SQLite and writes vault files.
-3. Sync command orchestrating the full pipeline.
+**Goal**: Render a durable Markdown vault, wire `sync` end-to-end, and harden export behavior for sign-off-ready MVP use.
 
-**Tasks**:
-- [ ] 4.1 Create Jinja2 template `templates/bookmark.md.j2`
-- [ ] 4.2 Create `exporter.py` — read SQLite, render Markdown, write to vault/YYYY/MM/
-- [ ] 4.3 Slug generation: first ~40 chars of text + tweet_id
-- [ ] 4.4 Wire `export` CLI command
-- [ ] 4.5 Wire `sync` CLI command (extract → enrich → export)
-- [ ] 4.6 Build FTS5 index population into export step
-- [ ] 4.7 Test: vault opens in Obsidian, tags browsable, notes render correctly
-- [ ] 4.8 Test: full end-to-end `sync` on real account
-- [ ] 4.9 Test: re-export after template change updates notes without re-enriching
-- [ ] 4.10 Spot-check 20 bookmarks for fidelity
+**Delivered**:
+- Markdown note template and exporter over SQLite state
+- Stable vault path contract under `vault/YYYY/MM/<slug>-<tweet_id>.md`
+- `sync` orchestration across extract → enrich → export
+- Export regression tests
+- Sprint 5 hardening for read-only DB validation and Markdown-fidelity safety
 
-**Success Criteria**:
-- `python -m leeknowledge sync` runs the full pipeline.
-- Vault opens in Obsidian with browsable, tagged, summarized notes.
-- MVP complete.
+**Exit Criteria Met**:
+- `export` renders notes from SQLite without bootstrapping a missing DB
+- `sync` runs the full pipeline in order and stops on failure
+- MVP is complete and documented as the project baseline
 
 ---
 
-### Phase 5 — Future (Optional)
+### Phase 5 — Leadership Signal Processing
 
-**Potential**:
-- Bookmark folder support (if X Premium exposes folders).
-- Thread reconstruction (multi-post threads as single notes).
-- Topic index pages (auto-generated MOC notes per topic).
-- Semantic search via local embeddings.
-- Browser extension for capture-at-bookmark-time.
-- Weekly synthesis notes.
+**Status**: ✅ Complete
 
-*Not required for initial success.*
+**Goal**: Add leadership-oriented derived artifacts on top of the MVP corpus without changing extraction or source-truth contracts.
+
+**Delivered roadmap slices**:
+- **Sprint 6 — Topic Index Notes**: shipped deterministic topic views over the corpus
+- **Sprint 7 — Leadership Synthesis**: shipped recurring weekly leadership briefs generated from the local corpus
+- **Sprint 8 — Leadership Metadata**: shipped a small decision-oriented metadata layer for prioritization and triage
+- **Sprint 9 — Curated Collections**: shipped initiative-centered collection notes for active strategic work
+
+**Closeout state**:
+- Sprint 9 closed the planned Level 2 roadmap and remains the verified leadership-feature baseline.
+- Sprint 10 universal source ingestion is now shipped and extends the product baseline to bounded multi-source intake.
+- Sprint 7-9 review findings remain explicit follow-up hardening work for the next sprint to sequence.
+
+---
+
+### Phase 6 — Universal Source Intake
+
+**Status**: ✅ Complete
+
+**Goal**: Expand leeKnowledge from an X-first pipeline into a source-agnostic intake system with bounded URL, Safari bookmark export, and deep-research artifact imports while keeping downstream enrichment, export, and leadership views unchanged.
+
+**Delivered roadmap slice**:
+- **Sprint 10 — Universal Source Ingestion**: shipped `import-url`, `import-safari-folder`, and `import-research` on top of a shared canonical source-identity contract
+
+**Post-closeout focus**:
+- Sequence the next sprint against the shipped mixed-source intake baseline.
+- Triage the Sprint 7-9 review findings into explicit hardening or backlog work.
+- Decide whether the next expansion is hardening, publishing/sharing, or another derived artifact layer.
 
 ---
 
@@ -229,10 +218,11 @@ Convert ~100-200 personal X bookmarks into a searchable, tagged, summarized Mark
 
 ## Current Status
 
-**Phase**: 0 (Research) — COMPLETE
-**Next Phase**: 1 (Scaffolding + Database)
+**Phase**: 6 (Universal Source Intake) — COMPLETE
+**Leadership Baseline**: Verified complete through Sprint 9
 **Mode**: 2 (Collaborative)
-**Next Milestone**: Runnable CLI with SQLite schema
+**Active Sprint**: None currently locked
+**Next Milestone**: Choose and scope the first post-Sprint-10 implementation layer against the shipped mixed-source baseline
 
 ---
 

@@ -1,0 +1,15 @@
+{
+  "adapter": "import-safari-folder",
+  "raw_archive_path": "/Users/lee/projects/leeKnowledge/pytest-of-lee/pytest-0/test_import_safari_bookmarks_q0/raw/import_safari_folder_2026-04-08.json",
+  "source": {
+    "input_path": "/Users/lee/projects/leeKnowledge/pytest-of-lee/pytest-0/test_import_safari_bookmarks_q0/Bookmarks.plist"
+  },
+  "issues": [
+    {
+      "reason": "Missing folder lineage in Safari bookmark entry.",
+      "payload_index": 1,
+      "source_ref": "https://example.com/root-only",
+      "payload_preview": "{'title': 'Root only', 'url': 'https://example.com/root-only', 'folder_lineage': ()}"
+    }
+  ]
+}

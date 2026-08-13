@@ -1,0 +1,87 @@
+# Sprint 9 initiative-definition source for curated collection planning.
+#
+# Operator workflow:
+# 1. Keep this file small: usually 3-5 live initiatives.
+# 2. Make each leadership_question concrete enough to support a real meeting,
+#    decision thread, or strategy review.
+# 3. Reuse the shipped topic taxonomy in topic_keys instead of inventing a
+#    second category tree.
+# 4. Use metadata_preferences and include_tags_any to bias candidate selection,
+#    not to force evidence-free membership.
+# 5. Keep max_items bounded so the eventual generated note stays reviewable.
+#
+# Current definitions are examples of how to connect external signal to live
+# strategic workstreams without turning collections into project trackers.
+collections:
+  - initiative_slug: ai-operating-model
+    title: AI Operating Model
+    status: active
+    leadership_question: What external signals should shape our AI operating model this quarter?
+    scope_note: Governance, deployment, and operating-pattern signals that could affect how we structure AI work.
+    topic_keys:
+      - ai-governance
+      - enterprise-agents
+    metadata_preferences:
+      strategic_relevance:
+        - strategic
+        - important
+      time_horizon:
+        - now
+        - next-quarter
+    include_tags_any:
+      - policy
+      - risk
+      - workflow
+      - automation
+    source_window_days: 60
+    max_items: 8
+    weekly_priority: true
+    description: Initiative brief for live AI operating-model decisions.
+
+  - initiative_slug: data-platform-strategy
+    title: Data Platform Strategy
+    status: active
+    leadership_question: Which external signals should influence our near-term data platform strategy?
+    scope_note: Platform design, semantic-layer, observability, and vendor-movement signals with clear platform implications.
+    topic_keys:
+      - data-platform
+      - vendor-landscape
+    metadata_preferences:
+      strategic_relevance:
+        - important
+        - strategic
+      organizational_impact:
+        - cross-functional
+        - company-wide
+    include_tags_any:
+      - observability
+      - dbt
+      - semantic layer
+      - comparison
+    source_window_days: 90
+    max_items: 8
+    weekly_priority: true
+    description: Evidence-backed view for platform posture and investment conversations.
+
+  - initiative_slug: vendor-watchlist
+    title: Vendor Watchlist
+    status: watching
+    leadership_question: Which vendor moves deserve leadership attention right now?
+    scope_note: Launch, pricing, partnership, and comparison signals that may affect vendor posture or market timing.
+    topic_keys:
+      - vendor-landscape
+    metadata_preferences:
+      time_horizon:
+        - now
+      organizational_impact:
+        - cross-functional
+        - company-wide
+    include_tags_any:
+      - pricing
+      - comparison
+      - partnership
+      - vendor
+    source_window_days: 45
+    max_items: 6
+    weekly_priority: true
+    description: Lightweight watchlist for vendor movement with leadership implications.

@@ -1,0 +1,32 @@
+{
+  "imported_at": "2026-04-08T19:45:49Z",
+  "adapter": "import-safari-folder",
+  "source": {
+    "input_path": "/Users/lee/projects/leeKnowledge/pytest-of-lee/pytest-0/test_import_safari_bookmarks_q0/Bookmarks.plist"
+  },
+  "items": [
+    {
+      "Children": [
+        {
+          "Children": [
+            {
+              "URIDictionary": {
+                "title": "Leadership article"
+              },
+              "URLString": "https://example.com/leadership",
+              "WebBookmarkType": "WebBookmarkTypeLeaf"
+            }
+          ],
+          "Title": "Leadership"
+        },
+        {
+          "URIDictionary": {
+            "title": "Root only"
+          },
+          "URLString": "https://example.com/root-only",
+          "WebBookmarkType": "WebBookmarkTypeLeaf"
+        }
+      ]
+    }
+  ]
+}

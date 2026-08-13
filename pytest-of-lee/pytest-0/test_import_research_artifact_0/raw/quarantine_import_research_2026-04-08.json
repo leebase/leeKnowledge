@@ -1,0 +1,15 @@
+{
+  "adapter": "import-research",
+  "raw_archive_path": "/Users/lee/projects/leeKnowledge/pytest-of-lee/pytest-0/test_import_research_artifact_0/raw/import_research_2026-04-08.json",
+  "source": {
+    "input_path": "/Users/lee/projects/leeKnowledge/pytest-of-lee/pytest-0/test_import_research_artifact_0/research.csv"
+  },
+  "issues": [
+    {
+      "reason": "Unreadable research row.",
+      "payload_index": 1,
+      "source_ref": "/Users/lee/projects/leeKnowledge/pytest-of-lee/pytest-0/test_import_research_artifact_0/research.csv",
+      "payload_preview": "{'title': '', 'summary': '', 'url': ''}"
+    }
+  ]
+}

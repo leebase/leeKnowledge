@@ -95,34 +95,25 @@ Weak step examples:
 
 ## Harness And Model Assignment Guidance
 
-Agent-Orch supports explicit per-step execution intent and preferred harness.
-Primary model choice is usually router-directed. Be precise about that.
+Agent-Orch supports explicit playbook-default and per-step routing intent for
+both harness and model. Use that routing layer directly instead of trying to
+encode model choice inside `execution`.
 
-Important lesson from live use:
-
-- The installed playbook schema supports per-step `execution` with
-  `task_type`, `capabilities_required`, and `routing_hints`.
-- The installed playbook schema does **not** currently support a first-class
-  primary `model` field inside `execution`.
-- The only explicit playbook-level `model` field currently accepted is under
-  `token_exhaustion_fallback`, which applies only during trusted reroute for
-  token exhaustion.
-- If you need a specific primary model for normal execution, that must come
-  from router policy, harness defaults, or future schema support, not from
-  `execution.model`.
-- If you need one primary model for the whole run on `pi_cli` today, set it
-  process-wide, for example:
-  `AGENT_ORCH_PI_MODEL=gpt-5.4-mini python3 -m agent_orch.main run ...`
-
-Use per-step `execution` blocks like this:
+Use `execution` for task intent and `routing` for the requested harness/model:
 
 ```yaml
 execution:
   task_type: coding_task
   capabilities_required:
     - repo_edit
-  routing_hints:
-    preferred_harness: codex_cli
+
+routing:
+  primary:
+    harness: codex_cli
+    model: gpt-5.4-mini
+  fallback:
+    harness: pi_cli
+    model: gpt-5.4
 ```
 
 Guidance:
@@ -133,35 +124,90 @@ Guidance:
   repair.
 - Use strong, deterministic verification steps for test execution, validation,
   and review.
-- Set `routing_hints.preferred_harness` per step when you know the best harness
-  for that job.
-- Let the router choose the primary provider profile and exact model unless
-  your repo has an explicit routing policy that says otherwise.
+- Set `routing.primary.harness` and `routing.primary.model` when you know the
+  preferred first route for that job.
+- Set `routing.fallback.harness` and `routing.fallback.model` when you want a
+  governed token-exhaustion reroute target.
+- Let the router choose the final route, but make your configured primary and
+  fallback intent explicit when the workflow has a clear routing policy.
 
 Current truthful rule:
 
 - per-step primary harness: yes
-- per-step primary model: usually router-selected, not something you should
-  assume is a universal first-class playbook field
-- explicit playbook-declared model today: fallback only, via
-  `token_exhaustion_fallback.model`
-- practical whole-run model pin today: `AGENT_ORCH_PI_MODEL=<model>`
+- per-step primary model: yes, through `routing.primary.model`
+- playbook-wide default primary/fallback route pair: yes, through
+  `defaults.routing`
+- configured route intent is not the same thing as executed-model evidence
+
+### Concrete per-step example
+
+Use playbook defaults for the common case, then override only the steps that
+need different model choices:
+
+```yaml
+defaults:
+  worker: pi_cli
+  execution:
+    task_type: coding_task
+    capabilities_required:
+      - repo_edit
+  routing:
+    primary:
+      harness: pi_cli
+      model: gpt-5.4-mini
+    fallback:
+      harness: pi_cli
+      model: gpt-5.4
+
+steps:
+  - step_id: implement_slice
+    name: Implement the slice
+    routing:
+      primary:
+        model: gpt-5.4-mini
+
+  - step_id: verify_slice
+    name: Repair and verify
+    routing:
+      primary:
+        model: gpt-5.3-codex
+
+  - step_id: review_slice
+    name: Review the slice
+    routing:
+      primary:
+        model: gpt-5.4
+```
+
+That means:
+
+- implementation prefers `pi_cli` on `gpt-5.4-mini`
+- verification asks for `gpt-5.3-codex`
+- review asks for `gpt-5.4`
+- the fallback route stays available for trusted token exhaustion
+
+If you are using an external router, these values become explicit router input.
+If you are not using an external router, whole-run adapter settings such as
+`AGENT_ORCH_PI_MODEL` may still be the practical enforcement path for some
+adapters even though the playbook can now record step-level routing intent.
 
 For trusted token-exhaustion recovery, you may declare both a generic fallback
 and a step-specific override:
 
 ```yaml
 defaults:
+  worker: pi_cli
   execution:
     task_type: coding_task
     capabilities_required:
       - repo_edit
-    routing_hints:
-      preferred_harness: codex_cli
-  token_exhaustion_fallback:
-    routing_hints:
-      preferred_harness: pi_cli
-    model: gpt-5.4-large
+  routing:
+    primary:
+      harness: codex_cli
+      model: gpt-5.4
+    fallback:
+      harness: pi_cli
+      model: gpt-5.4-large
 
 steps:
   - step_id: implement_dashboard
@@ -170,103 +216,97 @@ steps:
       task_type: coding_task
       capabilities_required:
         - repo_edit
-    token_exhaustion_fallback:
-      routing_hints:
-        preferred_harness: codex_cli
-      model: gpt-5.4
+    routing:
+      primary:
+        model: gpt-5.4-coding
+      fallback:
+        harness: codex_cli
 ```
 
-Fallback precedence:
+Routing precedence:
 
-1. use the step fallback if configured
-2. otherwise use the generic playbook fallback
-3. otherwise fail normally and surface the error
+1. use the step primary or fallback field when configured
+2. otherwise inherit the playbook default field
+3. otherwise fall back to legacy compatibility or router-native selection
+
+Compatibility note:
+
+- legacy `token_exhaustion_fallback` inputs still load, but new workflows
+  should prefer `routing.fallback`
 
 ## Minimal Workflow Skeleton
 
-Important lesson from live use:
+```yaml
+playbook_id: sprint_delivery
+name: Sprint Delivery
 
-- `validate-playbook` currently accepts strict JSON or JSON-compatible YAML.
-- In environments where `PyYAML` is not installed, plain YAML may fail
-  validation even if it is otherwise valid YAML.
-- The safest portable format today is a JSON document saved with a `.yaml`
-  extension, matching the built-in Agent-Orch templates.
-- The installed schema also expects `defaults.worker` even when
-  `defaults.execution` is present.
+defaults:
+  worker: pi_cli
+  execution:
+    task_type: coding_task
+    capabilities_required:
+      - repo_edit
+  routing:
+    primary:
+      harness: codex_cli
+      model: gpt-5.4-mini
 
-```json
-{
-  "playbook_id": "sprint_delivery",
-  "name": "Sprint Delivery",
-  "defaults": {
-    "worker": "pi_cli",
-    "retry_policy": {
-      "max_attempts": 2,
-      "strategy": "rerun_with_validation_feedback"
-    },
-    "execution": {
-      "task_type": "coding_task",
-      "capabilities_required": ["repo_edit"],
-      "routing_hints": {
-        "preferred_harness": "codex_cli"
-      }
-    }
-  },
-  "run_policy": {
-    "on_step_failure": "halt",
-    "require_validation_pass_to_advance": true
-  },
-  "steps": [
-    {
-      "step_id": "define_slice",
-      "name": "Define the delivery slice",
-      "mission": "Read the canon docs and write the scoped delivery contract.",
-      "allowed_paths": ["docs/", "sprint-plan.md"]
-    },
-    {
-      "step_id": "plan_slice",
-      "name": "Plan the delivery",
-      "mission": "Turn the scoped contract into an implementation plan.",
-      "allowed_paths": ["plans/", "architecture.md"]
-    },
-    {
-      "step_id": "implement_slice",
-      "name": "Implement the slice",
-      "mission": "Ship the scoped code and tests.",
-      "allowed_paths": ["src/", "tests/"]
-    },
-    {
-      "step_id": "document_slice",
-      "name": "Document the slice",
-      "mission": "Update user-facing and operator-facing docs.",
-      "allowed_paths": ["README.md", "docs/"]
-    },
-    {
-      "step_id": "repair_and_verify",
-      "name": "Repair and verify",
-      "mission": "Run the required checks, repair failures, and stop only when the slice is clean.",
-      "allowed_paths": ["src/", "tests/", "docs/"]
-    },
-    {
-      "step_id": "review_slice",
-      "name": "Review the slice",
-      "mission": "Produce a code review artifact focused on bugs, regressions, and testing gaps.",
-      "allowed_paths": ["code-reviews/"]
-    },
-    {
-      "step_id": "closeout",
-      "name": "Close out sprint docs",
-      "mission": "Update result review, context, architecture, and sprint state for handoff.",
-      "allowed_paths": [
-        "result-review.md",
-        "context.md",
-        "sprint-plan.md",
-        "WHERE_AM_I.md",
-        "architecture.md"
-      ]
-    }
-  ]
-}
+steps:
+  - step_id: define_slice
+    name: Define the delivery slice
+    mission: Read the canon docs and write the scoped delivery contract.
+    allowed_paths:
+      - docs/
+      - sprint-plan.md
+
+  - step_id: plan_slice
+    name: Plan the delivery
+    mission: Turn the scoped contract into an implementation plan.
+    allowed_paths:
+      - plans/
+      - architecture.md
+
+  - step_id: implement_slice
+    name: Implement the slice
+    mission: Ship the scoped code and tests.
+    allowed_paths:
+      - src/
+      - tests/
+
+  - step_id: document_slice
+    name: Document the slice
+    mission: Update user-facing and operator-facing docs.
+    allowed_paths:
+      - README.md
+      - user-guide.md
+      - docs/
+
+  - step_id: repair_and_verify
+    name: Repair and verify
+    mission: Run the required checks, repair failures, and stop only when the
+      slice is clean.
+    allowed_paths:
+      - src/
+      - tests/
+      - docs/
+
+  - step_id: review_slice
+    name: Review the slice
+    mission: Produce a code review artifact focused on bugs, regressions, and
+      testing gaps.
+    allowed_paths:
+      - code-reviews/
+
+  - step_id: closeout
+    name: Close out sprint docs
+    mission: Update result review, context, architecture, and sprint state for
+      handoff.
+    allowed_paths:
+      - result-review.md
+      - context.md
+      - sprint-plan.md
+      - WHERE_AM_I.md
+      - architecture.md
 ```
 
 ## How To Run The Workflow
@@ -277,20 +317,14 @@ Validate first:
 python3 -m agent_orch.main validate-playbook playbooks/<workflow>.yaml
 ```
 
-If validation says `Playbook must be valid JSON-compatible YAML`, check these
-first:
-
-1. Is the file strict JSON or does this environment have `PyYAML` installed?
-2. Did you include `defaults.worker`?
-3. Did you avoid unsupported fields such as `execution.model`?
-
-If you want the entire run to use a specific Pi model today, launch it like:
+For the common validate-run-watch path, prefer `launch-workflow`:
 
 ```bash
-AGENT_ORCH_PI_MODEL=gpt-5.4-mini python3 -m agent_orch.main run playbooks/<workflow>.yaml --workspace . --runs-dir artifacts/runs
+python3 -m agent_orch.main launch-workflow playbooks/<workflow>.yaml --workspace . --runs-dir artifacts/runs
 ```
 
-Then run the workflow:
+If you want to run the workflow and dashboard watcher separately, you can still
+do that:
 
 ```bash
 python3 -m agent_orch.main run playbooks/<workflow>.yaml --workspace . --runs-dir artifacts/runs
@@ -311,7 +345,10 @@ python3 -m agent_orch.main resume-run artifacts/runs/<failed_run_id>
 
 ## How To Run The Dashboard Monitor
 
-After the run starts, identify the run directory:
+If you used `launch-workflow`, Agent-Orch will print the run id and dashboard
+path for you.
+
+If you started the run manually, identify the run directory:
 
 - `artifacts/runs/<run_id>/`
 

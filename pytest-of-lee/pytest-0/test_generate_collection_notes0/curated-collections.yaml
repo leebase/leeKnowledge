@@ -1,0 +1,38 @@
+collections:
+  - initiative_slug: ai-operating-model
+    title: AI Operating Model
+    status: active
+    leadership_question: What external signals should shape our AI operating model this quarter?
+    scope_note: Governance and agent-delivery signals for operating-model choices.
+    topic_keys:
+      - ai-governance
+      - enterprise-agents
+    metadata_preferences:
+      strategic_relevance:
+        - strategic
+        - important
+      time_horizon:
+        - now
+        - next-quarter
+    include_tags_any:
+      - policy
+      - workflow
+    source_window_days: 365
+    max_items: 2
+    weekly_priority: true
+    description: Curated evidence for AI operating-model decisions.
+
+  - initiative_slug: empty-watchlist
+    title: Empty Watchlist
+    status: watching
+    leadership_question: What are we still missing?
+    scope_note: Intentionally narrow definition to confirm empty-state rendering.
+    topic_keys: []
+    metadata_preferences:
+      strategic_relevance:
+        - strategic
+    include_tags_any:
+      - partnership
+    source_window_days: 30
+    max_items: 3
+    weekly_priority: false

@@ -1,18 +1,36 @@
 {
-  "playbook_id": "leeknowledge_roadmap_sprints",
-  "name": "leeKnowledge Roadmap Sprints",
+  "playbook_id": "leeknowledge_level_2_sprints",
+  "name": "leeKnowledge Level 2 Roadmap Sprints",
   "defaults": {
     "worker": "pi_cli",
     "retry_policy": {
       "max_attempts": 3,
       "strategy": "rerun_with_validation_feedback"
+    },
+    "execution": {
+      "task_type": "documentation_task",
+      "capabilities_required": [
+        "repo_edit"
+      ]
+    },
+    "routing": {
+      "primary": {
+        "harness": "pi_cli",
+        "model": "gpt-5.4-mini"
+      },
+      "fallback": {
+        "harness": "pi_cli",
+        "model": "gpt-5.4"
+      }
     }
   },
   "operational_paths": [
     "artifacts/",
     ".agent-orch-scratch/",
     "src/leeknowledge.egg-info/",
-    "state/"
+    "state/",
+    "vault/",
+    ".venv/"
   ],
   "run_policy": {
     "on_step_failure": "halt",
@@ -20,9 +38,9 @@
   },
   "steps": [
     {
-      "step_id": "reconcile_baseline",
-      "name": "Reconcile completed foundation baseline",
-      "mission": "Read the canon docs, confirm the Phase 1 scaffold baseline, and align the active sprint state before executing the remaining roadmap sprints. Use the pi harness default model for this run.",
+      "step_id": "reconcile_level_2_baseline",
+      "name": "Reconcile Level 2 baseline",
+      "mission": "Read the canon docs, confirm MVP-complete baseline reality, and align the active Level 2 sprint state before executing the remaining leadership-oriented roadmap sprints.",
       "allowed_paths": [
         "AGENTS.md",
         "product-definition.md",
@@ -32,78 +50,166 @@
         "context.md",
         "WHERE_AM_I.md",
         "result-review.md",
+        "whats-next.md",
+        "new-project-onboard.md",
         "playbooks/"
-      ]
+      ],
+      "execution": {
+        "task_type": "planning_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      }
     },
     {
-      "step_id": "define_sprint_2_extraction",
-      "name": "Define Sprint 2 extraction slice",
-      "mission": "Turn Sprint 2 in sprint-plan.md into a narrow delivery contract for immutable raw capture plus SQLite normalization, including scope boundaries, required outputs, and verification gates.",
+      "step_id": "define_sprint_6_topic_index_notes",
+      "name": "Define Sprint 6 topic index notes",
+      "mission": "Turn Sprint 6 into a narrow delivery contract for leadership-oriented topic index notes, including taxonomy boundaries, vault path contract, source backlink expectations, and verification gates.",
       "allowed_paths": [
-        "sprint-plan.md",
+        "product-definition.md",
         "architecture.md",
+        "sprint-plan.md",
+        "whats-next.md",
         "playbooks/"
-      ]
+      ],
+      "execution": {
+        "task_type": "planning_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      }
     },
     {
-      "step_id": "plan_sprint_2_extraction",
-      "name": "Plan Sprint 2 extraction implementation",
-      "mission": "Convert the Sprint 2 contract into an implementation-ready plan covering extractor boundaries, raw archive rules, canonical normalization, fallback sequencing, dedup semantics, and verification order.",
+      "step_id": "plan_sprint_6_topic_index_notes",
+      "name": "Plan Sprint 6 topic index notes",
+      "mission": "Convert the Sprint 6 contract into an implementation-ready plan covering taxonomy shape, grouping rules, topic-note template structure, CLI or export integration, and verification order.",
       "allowed_paths": [
         "architecture.md",
         "sprint-plan.md",
         "playbooks/"
-      ]
+      ],
+      "execution": {
+        "task_type": "planning_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      }
     },
     {
-      "step_id": "implement_sprint_2_extraction",
-      "name": "Implement Sprint 2 extraction slice",
-      "mission": "Ship extractor and normalizer code for Chrome-profile launch, bookmark capture, raw archive persistence, SQLite insertion, and extract command wiring.",
+      "step_id": "implement_sprint_6_topic_index_notes",
+      "name": "Implement Sprint 6 topic index notes",
+      "mission": "Ship deterministic topic grouping and Markdown topic-note generation from existing bookmark and enrichment state, including stable derived-note paths, source backlinks, and a dedicated `topics` CLI command separate from `export`.",
       "allowed_paths": [
         "src/",
         "tests/",
-        "config/",
+        "vault/",
         "playbooks/"
-      ]
+      ],
+      "execution": {
+        "task_type": "coding_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      }
     },
     {
-      "step_id": "document_sprint_2_extraction",
-      "name": "Document Sprint 2 extraction slice",
-      "mission": "Update user-facing and operator-facing docs for the extraction slice, including usage notes, configuration expectations, and any changed operator steps.",
+      "step_id": "document_sprint_6_topic_index_notes",
+      "name": "Document Sprint 6 topic index notes",
+      "mission": "Update user-facing and operator-facing docs for topic-note generation, taxonomy expectations, vault layout, and operator usage guidance.",
       "allowed_paths": [
         "README.md",
-        "AGENTS.md",
+        "using-leeKnowledge.md",
+        "whats-next.md",
         "sprint-plan.md",
         "architecture.md",
         "playbooks/"
       ]
     },
     {
-      "step_id": "repair_verify_sprint_2_extraction",
-      "name": "Repair and verify Sprint 2 extraction slice",
-      "mission": "Run the required tests and real workflow checks for the extraction slice, repair failures, and stop only when raw archives, SQLite inserts, and rerun behavior are clean.",
+      "step_id": "repair_verify_sprint_6_topic_index_notes",
+      "name": "Repair and verify Sprint 6 topic index notes",
+      "mission": "Run automated checks plus the `export` then `topics` workflow, repair failures, and stop only when topic notes are generated cleanly and rerun safely from local state.",
       "allowed_paths": [
         "src/",
         "tests/",
-        "config/",
-        "data/raw/",
+        "vault/",
         "state/",
         "playbooks/"
-      ]
+      ],
+      "execution": {
+        "task_type": "testing_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      },
+      "routing": {
+        "primary": {
+          "model": "gpt-5.3-codex"
+        }
+      },
+      "validation": {
+        "system": [
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m pytest"
+          },
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m leeknowledge export"
+          },
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m leeknowledge topics"
+          }
+        ],
+        "structural": [
+          {
+            "type": "file_exists",
+            "path": "vault/topics/ai-governance.md"
+          }
+        ]
+      }
     },
     {
-      "step_id": "review_sprint_2_extraction",
-      "name": "Review Sprint 2 extraction results",
-      "mission": "Produce a code review artifact focused on bugs, regressions, brittleness, and testing gaps in the extraction slice.",
+      "step_id": "review_sprint_6_topic_index_notes",
+      "name": "Review Sprint 6 topic index notes",
+      "mission": "Produce a code review artifact focused on grouping correctness, derived-note fidelity, regressions, and testing gaps in the topic-index slice.",
       "allowed_paths": [
         "code-reviews/",
         "playbooks/"
-      ]
+      ],
+      "outputs": {
+        "required": [
+          {
+            "path": "code-reviews/sprint-6-topic-index-notes-review.md",
+            "type": "markdown"
+          }
+        ]
+      },
+      "execution": {
+        "task_type": "review_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      },
+      "routing": {
+        "primary": {
+          "model": "gpt-5.4"
+        }
+      },
+      "validation": {
+        "structural": [
+          {
+            "type": "file_exists",
+            "path": "code-reviews/sprint-6-topic-index-notes-review.md"
+          }
+        ]
+      }
     },
     {
-      "step_id": "closeout_sprint_2_extraction",
-      "name": "Close out Sprint 2 docs",
-      "mission": "Update result review, context, sprint status, and architecture notes for the extraction slice so another run can start from a clean handoff.",
+      "step_id": "closeout_sprint_6_topic_index_notes",
+      "name": "Close out Sprint 6 docs",
+      "mission": "Update result review, context, sprint status, product health, and architecture notes so the repo reflects completion of the first Level 2 slice and is ready for Sprint 7.",
       "allowed_paths": [
         "result-review.md",
         "context.md",
@@ -114,74 +220,173 @@
       ]
     },
     {
-      "step_id": "define_sprint_3_enrichment",
-      "name": "Define Sprint 3 enrichment slice",
-      "mission": "Write the scoped delivery contract for URL expansion, optional page metadata fetch, structured enrichment output, and enrichment rerun behavior.",
+      "step_id": "define_sprint_7_leadership_synthesis",
+      "name": "Define Sprint 7 leadership synthesis",
+      "mission": "Write the scoped delivery contract for recurring weekly or monthly leadership synthesis notes derived from topic notes and the existing bookmark corpus.",
       "allowed_paths": [
-        "sprint-plan.md",
-        "architecture.md",
-        "playbooks/"
-      ]
-    },
-    {
-      "step_id": "plan_sprint_3_enrichment",
-      "name": "Plan Sprint 3 enrichment implementation",
-      "mission": "Turn the Sprint 3 contract into an implementation plan covering llm config, enrichment schema, validation, versioning, and failure handling.",
-      "allowed_paths": [
+        "product-definition.md",
         "architecture.md",
         "sprint-plan.md",
+        "whats-next.md",
         "playbooks/"
-      ]
+      ],
+      "execution": {
+        "task_type": "planning_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      },
+      "validation": {
+        "structural": [
+          {
+            "type": "markdown_headings_present",
+            "path": "sprint-plan.md",
+            "headings": [
+              "Sprint 7 — Leadership Synthesis"
+            ]
+          }
+        ]
+      }
     },
     {
-      "step_id": "implement_sprint_3_enrichment",
-      "name": "Implement Sprint 3 enrichment slice",
-      "mission": "Ship URL expansion, enrichment pipeline code, SQLite persistence for enrichments, and the enrich command with structured, replayable behavior.",
+      "step_id": "plan_sprint_7_leadership_synthesis",
+      "name": "Plan Sprint 7 leadership synthesis",
+      "mission": "Turn the Sprint 7 synthesis contract into an implementation plan covering cadence, artifact naming, source selection rules, and verification of usefulness for leadership brief preparation.",
+      "allowed_paths": [
+        "architecture.md",
+        "sprint-plan.md",
+        "playbooks/"
+      ],
+      "execution": {
+        "task_type": "planning_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      }
+    },
+    {
+      "step_id": "implement_sprint_7_leadership_synthesis",
+      "name": "Implement Sprint 7 leadership synthesis",
+      "mission": "Ship generation for recurring leadership synthesis notes derived from topic notes and the bookmark corpus, including a canonical weekly archive path, a stable latest-brief alias, and source backlinks.",
       "allowed_paths": [
         "src/",
         "tests/",
-        "config/",
+        "vault/",
         "playbooks/"
-      ]
+      ],
+      "execution": {
+        "task_type": "coding_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      }
     },
     {
-      "step_id": "document_sprint_3_enrichment",
-      "name": "Document Sprint 3 enrichment slice",
-      "mission": "Update docs for enrichment configuration, rerun semantics, optional behavior, and any operator guidance needed for local model routing.",
+      "step_id": "document_sprint_7_leadership_synthesis",
+      "name": "Document Sprint 7 leadership synthesis",
+      "mission": "Update docs for synthesis-note generation, operator cadence, artifact locations, and how to use the briefs for leadership prep.",
       "allowed_paths": [
         "README.md",
-        "AGENTS.md",
+        "using-leeKnowledge.md",
+        "whats-next.md",
         "sprint-plan.md",
         "architecture.md",
-        "support-agents.md",
         "playbooks/"
       ]
     },
     {
-      "step_id": "repair_verify_sprint_3_enrichment",
-      "name": "Repair and verify Sprint 3 enrichment slice",
-      "mission": "Run automated checks and enrichment workflow validation, repair failures, and stop only when malformed output handling and rerun behavior are clean.",
+      "step_id": "repair_verify_sprint_7_leadership_synthesis",
+      "name": "Repair and verify Sprint 7 leadership synthesis",
+      "mission": "Run automated checks and realistic synthesis generation workflows, repair failures, and stop only when the archived weekly brief plus the latest leadership alias are generated cleanly from local state.",
       "allowed_paths": [
         "src/",
         "tests/",
-        "config/",
+        "vault/",
         "state/",
         "playbooks/"
-      ]
+      ],
+      "execution": {
+        "task_type": "testing_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      },
+      "routing": {
+        "primary": {
+          "model": "gpt-5.3-codex"
+        }
+      },
+      "validation": {
+        "system": [
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m pytest"
+          },
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m leeknowledge export"
+          },
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m leeknowledge topics"
+          },
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m leeknowledge synthesize --cadence weekly --period 2026-W15"
+          }
+        ],
+        "structural": [
+          {
+            "type": "file_exists",
+            "path": "vault/synthesis/weekly/2026/2026-W15.md"
+          },
+          {
+            "type": "file_exists",
+            "path": "vault/briefs/latest-weekly-signals.md"
+          }
+        ]
+      }
     },
     {
-      "step_id": "review_sprint_3_enrichment",
-      "name": "Review Sprint 3 enrichment results",
-      "mission": "Produce a code review artifact focused on enrichment correctness, replay safety, prompt/schema risk, and missing tests.",
+      "step_id": "review_sprint_7_leadership_synthesis",
+      "name": "Review Sprint 7 leadership synthesis",
+      "mission": "Produce a code review artifact focused on synthesis accuracy, artifact usefulness, regressions, and testing gaps in the leadership-brief slice.",
       "allowed_paths": [
         "code-reviews/",
         "playbooks/"
-      ]
+      ],
+      "outputs": {
+        "required": [
+          {
+            "path": "code-reviews/sprint-7-leadership-synthesis-review.md",
+            "type": "markdown"
+          }
+        ]
+      },
+      "execution": {
+        "task_type": "review_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      },
+      "routing": {
+        "primary": {
+          "model": "gpt-5.4"
+        }
+      },
+      "validation": {
+        "structural": [
+          {
+            "type": "file_exists",
+            "path": "code-reviews/sprint-7-leadership-synthesis-review.md"
+          }
+        ]
+      }
     },
     {
-      "step_id": "closeout_sprint_3_enrichment",
-      "name": "Close out Sprint 3 docs",
-      "mission": "Update result review, context, sprint state, and architecture notes for the enrichment slice so the export sprint can start from accurate handoff docs.",
+      "step_id": "closeout_sprint_7_leadership_synthesis",
+      "name": "Close out Sprint 7 docs",
+      "mission": "Update result review, context, sprint state, project health, and architecture notes so the repo is ready for the leadership-metadata sprint.",
       "allowed_paths": [
         "result-review.md",
         "context.md",
@@ -192,73 +397,353 @@
       ]
     },
     {
-      "step_id": "define_sprint_4_export",
-      "name": "Define Sprint 4 export slice",
-      "mission": "Write the scoped delivery contract for Markdown rendering, vault layout, sync orchestration, and end-to-end fidelity checks.",
+      "step_id": "define_sprint_8_leadership_metadata",
+      "name": "Define Sprint 8 leadership metadata",
+      "mission": "Write the scoped delivery contract for a small decision-oriented metadata layer such as strategic relevance, time horizon, organizational impact, and leadership question.",
       "allowed_paths": [
-        "sprint-plan.md",
-        "architecture.md",
-        "playbooks/"
-      ]
-    },
-    {
-      "step_id": "plan_sprint_4_export",
-      "name": "Plan Sprint 4 export implementation",
-      "mission": "Turn the Sprint 4 contract into an implementation plan covering note templates, path conventions, sync sequencing, and operator validation in Obsidian.",
-      "allowed_paths": [
+        "product-definition.md",
         "architecture.md",
         "sprint-plan.md",
+        "whats-next.md",
         "playbooks/"
-      ]
+      ],
+      "execution": {
+        "task_type": "planning_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      },
+      "validation": {
+        "structural": [
+          {
+            "type": "markdown_headings_present",
+            "path": "sprint-plan.md",
+            "headings": [
+              "Sprint 8 — Leadership Metadata"
+            ]
+          }
+        ]
+      }
     },
     {
-      "step_id": "implement_sprint_4_export",
-      "name": "Implement Sprint 4 export slice",
-      "mission": "Ship Markdown rendering, vault path generation, sync orchestration, and export command behavior that combines bookmarks plus enrichments into final notes.",
+      "step_id": "plan_sprint_8_leadership_metadata",
+      "name": "Plan Sprint 8 leadership metadata",
+      "mission": "Convert the Sprint 8 contract into an implementation-ready plan covering metadata fields, storage or derived-view rules, note rendering updates, and validation order.",
+      "allowed_paths": [
+        "architecture.md",
+        "sprint-plan.md",
+        "playbooks/"
+      ],
+      "execution": {
+        "task_type": "planning_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      }
+    },
+    {
+      "step_id": "implement_sprint_8_leadership_metadata",
+      "name": "Implement Sprint 8 leadership metadata",
+      "mission": "Ship the smallest useful leadership-oriented metadata layer with a dedicated explicit generation stage, keeping source records stable while making the weekly leadership flow more useful for prioritization and triage.",
       "allowed_paths": [
         "src/",
         "tests/",
         "vault/",
+        "config/",
         "playbooks/"
-      ]
+      ],
+      "execution": {
+        "task_type": "coding_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      }
     },
     {
-      "step_id": "document_sprint_4_export",
-      "name": "Document Sprint 4 export slice",
-      "mission": "Update user-facing and operator-facing docs for export, sync, vault layout, and manual quality checks in Obsidian.",
+      "step_id": "document_sprint_8_leadership_metadata",
+      "name": "Document Sprint 8 leadership metadata",
+      "mission": "Update docs for the leadership-metadata contract, operator meaning of each field, and any changes to export or derived-note behavior.",
       "allowed_paths": [
         "README.md",
-        "AGENTS.md",
+        "using-leeKnowledge.md",
+        "whats-next.md",
         "sprint-plan.md",
         "architecture.md",
         "playbooks/"
       ]
     },
     {
-      "step_id": "repair_verify_sprint_4_export",
-      "name": "Repair and verify Sprint 4 export slice",
-      "mission": "Run tests and end-to-end sync validation, repair failures, and stop only when export fidelity, vault structure, and sync behavior are clean.",
+      "step_id": "repair_verify_sprint_8_leadership_metadata",
+      "name": "Repair and verify Sprint 8 leadership metadata",
+      "mission": "Run automated checks and the explicit export → topics → metadata → weekly synthesis workflow, repair failures, and stop only when the metadata layer is generated and rendered consistently and safely.",
       "allowed_paths": [
         "src/",
         "tests/",
         "vault/",
         "state/",
         "playbooks/"
-      ]
+      ],
+      "execution": {
+        "task_type": "testing_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      },
+      "routing": {
+        "primary": {
+          "model": "gpt-5.3-codex"
+        }
+      },
+      "validation": {
+        "system": [
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m pytest"
+          },
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m leeknowledge export"
+          },
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m leeknowledge topics"
+          },
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m leeknowledge metadata"
+          },
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m leeknowledge synthesize --cadence weekly --period 2026-W15"
+          }
+        ],
+        "structural": [
+          {
+            "type": "file_exists",
+            "path": "vault/synthesis/weekly/2026/2026-W15.md"
+          }
+        ]
+      }
     },
     {
-      "step_id": "review_sprint_4_export",
-      "name": "Review Sprint 4 export results",
-      "mission": "Produce a code review artifact focused on regressions, Markdown quality risks, sync integrity, and missing validation.",
+      "step_id": "review_sprint_8_leadership_metadata",
+      "name": "Review Sprint 8 leadership metadata",
+      "mission": "Produce a code review artifact focused on metadata drift risk, rendering regressions, operator confusion, and testing gaps in the leadership-metadata slice.",
       "allowed_paths": [
         "code-reviews/",
+        "playbooks/"
+      ],
+      "outputs": {
+        "required": [
+          {
+            "path": "code-reviews/sprint-8-leadership-metadata-review.md",
+            "type": "markdown"
+          }
+        ]
+      },
+      "execution": {
+        "task_type": "review_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      },
+      "routing": {
+        "primary": {
+          "model": "gpt-5.4"
+        }
+      },
+      "validation": {
+        "structural": [
+          {
+            "type": "file_exists",
+            "path": "code-reviews/sprint-8-leadership-metadata-review.md"
+          }
+        ]
+      }
+    },
+    {
+      "step_id": "closeout_sprint_8_leadership_metadata",
+      "name": "Close out Sprint 8 docs",
+      "mission": "Update result review, context, sprint state, and architecture notes so the repo is ready for curated collection notes.",
+      "allowed_paths": [
+        "result-review.md",
+        "context.md",
+        "sprint-plan.md",
+        "WHERE_AM_I.md",
+        "architecture.md",
         "playbooks/"
       ]
     },
     {
-      "step_id": "closeout_sprint_4_export",
-      "name": "Close out Sprint 4 docs",
-      "mission": "Update result review, context, sprint plan, project health, and architecture notes so the repo accurately reflects MVP completion or the remaining gaps.",
+      "step_id": "define_sprint_9_curated_collections",
+      "name": "Define Sprint 9 curated collections",
+      "mission": "Write the scoped delivery contract for curated collection notes tied to active leadership initiatives so saved signal can support live strategic work.",
+      "allowed_paths": [
+        "product-definition.md",
+        "architecture.md",
+        "sprint-plan.md",
+        "whats-next.md",
+        "playbooks/"
+      ],
+      "execution": {
+        "task_type": "planning_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      },
+      "validation": {
+        "structural": [
+          {
+            "type": "markdown_headings_present",
+            "path": "sprint-plan.md",
+            "headings": [
+              "Sprint 9 — Curated Collections"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "step_id": "plan_sprint_9_curated_collections",
+      "name": "Plan Sprint 9 curated collections",
+      "mission": "Turn the Sprint 9 contract into an implementation plan covering collection-note structure, selection rules, initiative mapping, and verification of real-work usefulness.",
+      "allowed_paths": [
+        "architecture.md",
+        "sprint-plan.md",
+        "playbooks/"
+      ],
+      "execution": {
+        "task_type": "planning_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      }
+    },
+    {
+      "step_id": "implement_sprint_9_curated_collections",
+      "name": "Implement Sprint 9 curated collections",
+      "mission": "Ship curated collection-note support for active initiatives, keeping the implementation lightweight and clearly separate from the source bookmark notes.",
+      "allowed_paths": [
+        "src/",
+        "tests/",
+        "vault/",
+        "playbooks/"
+      ],
+      "execution": {
+        "task_type": "coding_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      }
+    },
+    {
+      "step_id": "document_sprint_9_curated_collections",
+      "name": "Document Sprint 9 curated collections",
+      "mission": "Update docs for collection-note usage, initiative curation workflow, and operator guidance for connecting external signal to live strategic work.",
+      "allowed_paths": [
+        "README.md",
+        "using-leeKnowledge.md",
+        "whats-next.md",
+        "sprint-plan.md",
+        "architecture.md",
+        "playbooks/"
+      ]
+    },
+    {
+      "step_id": "repair_verify_sprint_9_curated_collections",
+      "name": "Repair and verify Sprint 9 curated collections",
+      "mission": "Run automated checks and realistic collection-note workflows, repair failures, and stop only when curated collections are generated cleanly and remain easy to use.",
+      "allowed_paths": [
+        "src/",
+        "tests/",
+        "vault/",
+        "state/",
+        "playbooks/"
+      ],
+      "execution": {
+        "task_type": "testing_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      },
+      "routing": {
+        "primary": {
+          "model": "gpt-5.3-codex"
+        }
+      },
+      "validation": {
+        "system": [
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m pytest"
+          },
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m leeknowledge export"
+          },
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m leeknowledge topics"
+          },
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m leeknowledge metadata"
+          },
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m leeknowledge synthesize --cadence weekly --period 2026-W15"
+          },
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m leeknowledge collections"
+          },
+          {
+            "type": "command_succeeds",
+            "command": "bash -lc \"find vault/collections -maxdepth 1 -type f -name '*.md' | grep -q .\""
+          }
+        ]
+      }
+    },
+    {
+      "step_id": "review_sprint_9_curated_collections",
+      "name": "Review Sprint 9 curated collections",
+      "mission": "Produce a code review artifact focused on collection usefulness, regressions, note-fidelity risks, and missing validation in the curated-collections slice.",
+      "allowed_paths": [
+        "code-reviews/",
+        "playbooks/"
+      ],
+      "outputs": {
+        "required": [
+          {
+            "path": "code-reviews/sprint-9-curated-collections-review.md",
+            "type": "markdown"
+          }
+        ]
+      },
+      "execution": {
+        "task_type": "review_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      },
+      "routing": {
+        "primary": {
+          "model": "gpt-5.4"
+        }
+      },
+      "validation": {
+        "structural": [
+          {
+            "type": "file_exists",
+            "path": "code-reviews/sprint-9-curated-collections-review.md"
+          }
+        ]
+      }
+    },
+    {
+      "step_id": "closeout_sprint_9_curated_collections",
+      "name": "Close out Sprint 9 docs",
+      "mission": "Update result review, context, sprint state, and project health so the repo reflects the completed Level 2 roadmap and is ready for later multi-source or sharing decisions.",
       "allowed_paths": [
         "result-review.md",
         "context.md",

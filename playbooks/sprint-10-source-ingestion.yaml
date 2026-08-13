@@ -1,0 +1,348 @@
+{
+  "playbook_id": "leeknowledge_sprint_10_source_ingestion",
+  "name": "LeeKnowledge Sprint 10 — Universal Source Ingestion",
+  "defaults": {
+    "worker": "pi_cli",
+    "retry_policy": {
+      "max_attempts": 3,
+      "strategy": "rerun_with_validation_feedback"
+    },
+    "execution": {
+      "task_type": "coding_task",
+      "capabilities_required": [
+        "repo_edit"
+      ]
+    },
+    "routing": {
+      "primary": {
+        "harness": "pi_cli",
+        "model": "gpt-5.4-mini"
+      },
+      "fallback": {
+        "harness": "pi_cli",
+        "model": "gpt-5.4"
+      }
+    }
+  },
+  "operational_paths": [
+    "artifacts/",
+    ".agent-orch-scratch/",
+    "src/leeknowledge.egg-info/",
+    "state/",
+    "vault/",
+    ".venv/",
+    "backlog/",
+    "data/",
+    ".pi-test/"
+  ],
+  "run_policy": {
+    "on_step_failure": "halt",
+    "require_validation_pass_to_advance": true
+  },
+  "steps": [
+    {
+      "step_id": "reconcile_sprint_10_baseline",
+      "name": "Reconcile Sprint 10 baseline",
+      "mission": "Confirm source-agnostic intake intent is reflected in architecture/product docs, verify Sprint 9 closeout state, and lock Sprint 10 as the active implementation target.",
+      "allowed_paths": [
+        "AGENTS.md",
+        "context.md",
+        "project-plan.md",
+        "product-definition.md",
+        "architecture.md",
+        "sprint-plan.md",
+        "backlog/candidates/"
+      ],
+      "execution": {
+        "task_type": "planning_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      },
+      "routing": {
+        "primary": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4-mini"
+        },
+        "fallback": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4"
+        }
+      }
+    },
+    {
+      "step_id": "define_sprint_10_source_ingestion",
+      "name": "Define Sprint 10 source ingestion contract",
+      "mission": "Make the acceptance contract explicit for import-url, import-safari-folder, and import-research including identity fields, quarantine behavior, and backward compatibility with existing exports/derived stages.",
+      "allowed_paths": [
+        "product-definition.md",
+        "architecture.md",
+        "sprint-plan.md",
+        "backlog/candidates/BI-001-universal-sources-ingestion.md",
+        "playbooks/"
+      ],
+      "execution": {
+        "task_type": "planning_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      },
+      "routing": {
+        "primary": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4-mini"
+        },
+        "fallback": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4"
+        }
+      },
+      "validation": {
+        "structural": [
+          {
+            "type": "file_exists",
+            "path": "sprint-plan.md"
+          },
+          {
+            "type": "markdown_headings_present",
+            "path": "sprint-plan.md",
+            "headings": [
+              "Sprint 10 — Universal Source Ingestion"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "step_id": "plan_sprint_10_source_ingestion",
+      "name": "Plan the Sprint 10 implementation sequence",
+      "mission": "Split implementation into adapter dispatch, parser-normalizer mapping, idempotence strategy, quarantine path, verification, and handoff updates with explicit dependencies.",
+      "allowed_paths": [
+        "sprint-plan.md",
+        "architecture.md",
+        "product-definition.md",
+        "using-leeKnowledge.md",
+        "playbooks/"
+      ],
+      "execution": {
+        "task_type": "planning_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      },
+      "routing": {
+        "primary": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4-mini"
+        },
+        "fallback": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4"
+        }
+      }
+    },
+    {
+      "step_id": "implement_sprint_10_source_ingestion",
+      "name": "Implement universal source intake",
+      "mission": "Build import-url/import-safari-folder/import-research into the adapter layer, persist immutable raw artifacts, normalize with stable source identity fields, and keep non-import flows behavior unchanged.",
+      "allowed_paths": [
+        "src/",
+        "tests/",
+        "backlog/",
+        "architecture.md",
+        "product-definition.md",
+        "sprint-plan.md"
+      ],
+      "execution": {
+        "task_type": "coding_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      },
+      "routing": {
+        "primary": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4-mini"
+        },
+        "fallback": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4"
+        }
+      },
+      "validation": {
+        "structural": [
+          {
+            "type": "file_exists",
+            "path": "src/leeknowledge/cli.py"
+          },
+          {
+            "type": "file_exists",
+            "path": "src/leeknowledge/normalizer.py"
+          },
+          {
+            "type": "file_exists",
+            "path": "src/leeknowledge/db.py"
+          }
+        ]
+      }
+    },
+    {
+      "step_id": "document_sprint_10_source_ingestion",
+      "name": "Document source-intake usage",
+      "mission": "Update operator-facing docs with practical command examples for explicit URL, Safari-folder, and research artifact imports, plus practical caveats for each pathway.",
+      "allowed_paths": [
+        "architecture.md",
+        "product-definition.md",
+        "using-leeKnowledge.md",
+        "README.md",
+        "whats-next.md",
+        "result-review.md",
+        "sprint-plan.md",
+        "project-plan.md",
+        "playbooks/"
+      ],
+      "execution": {
+        "task_type": "documentation_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      },
+      "routing": {
+        "primary": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4-mini"
+        },
+        "fallback": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4"
+        }
+      }
+    },
+    {
+      "step_id": "repair_verify_sprint_10_source_ingestion",
+      "name": "Repair and verify Sprint 10 source intake slice",
+      "mission": "Run the adapter smoke tests, import dry-run checks, and regression commands; add or adjust code and tests until command behavior and pipeline boundaries are stable.",
+      "allowed_paths": [
+        "src/",
+        "tests/",
+        "state/",
+        "data/",
+        "vault/",
+        "backlog/",
+        "playbooks/",
+        "code-reviews/",
+        "context.md",
+        "result-review.md",
+        "sprint-plan.md",
+        ".pi-test/"
+      ],
+      "execution": {
+        "task_type": "testing_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      },
+      "routing": {
+        "primary": {
+          "harness": "pi_cli",
+          "model": "gpt-5.3-codex"
+        },
+        "fallback": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4"
+        }
+      },
+      "validation": {
+        "system": [
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m pytest"
+          },
+          {
+            "type": "command_succeeds",
+            "command": "env PYTHONPATH=src .venv/bin/python -m leeknowledge --help | grep -E \"import-url|import-safari-folder|import-research\""
+          }
+        ],
+        "structural": [
+          {
+            "type": "file_exists",
+            "path": "data/raw"
+          }
+        ]
+      }
+    },
+    {
+      "step_id": "review_sprint_10_source_ingestion",
+      "name": "Review Sprint 10 source intake slice",
+      "mission": "Create a code review artifact that validates adapter boundaries, dedupe semantics, idempotence behavior, and preservation of existing X/derived-stage contracts.",
+      "allowed_paths": [
+        "code-reviews/",
+        "src/",
+        "tests/",
+        "playbooks/"
+      ],
+      "outputs": {
+        "required": [
+          {
+            "path": "code-reviews/sprint-10-source-ingestion-review.md",
+            "type": "markdown"
+          }
+        ]
+      },
+      "execution": {
+        "task_type": "review_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      },
+      "routing": {
+        "primary": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4"
+        },
+        "fallback": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4-mini"
+        }
+      },
+      "validation": {
+        "structural": [
+          {
+            "type": "file_exists",
+            "path": "code-reviews/sprint-10-source-ingestion-review.md"
+          }
+        ]
+      }
+    },
+    {
+      "step_id": "closeout_sprint_10_source_ingestion",
+      "name": "Close out Sprint 10 docs and handoff",
+      "mission": "Update result review, context, and sprint-plan handoff status so the next implementation layer can start directly from the completed Sprint 10 contract.",
+      "allowed_paths": [
+        "context.md",
+        "WHERE_AM_I.md",
+        "result-review.md",
+        "sprint-plan.md",
+        "architecture.md",
+        "project-plan.md",
+        "playbooks/"
+      ],
+      "execution": {
+        "task_type": "documentation_task",
+        "capabilities_required": [
+          "repo_edit"
+        ]
+      },
+      "routing": {
+        "primary": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4-mini"
+        },
+        "fallback": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4"
+        }
+      }
+    }
+  ]
+}

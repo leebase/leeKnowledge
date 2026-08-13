@@ -11,7 +11,11 @@ from leeknowledge.db import (
     insert_enrichment,
     upsert_url_cache,
 )
-from leeknowledge.exporter import ExportError, export_markdown
+from leeknowledge.exporter import (
+    ExportError,
+    export_markdown,
+    export_story_markdown,
+)
 
 
 def _bookmark(tweet_id: str = "123") -> dict[str, object]:
@@ -71,6 +75,7 @@ def test_export_markdown_renders_source_grounded_notes(tmp_path):
 
     note_text = note_path.read_text()
     assert 'tweet_id: "123"' in note_text
+    assert not (vault_dir / "topics").exists()
     assert 'author_username: "lee"' in note_text
     assert 'created_at: null' in note_text
     assert 'summary: "A concise summary"' in note_text
@@ -83,6 +88,182 @@ def test_export_markdown_renders_source_grounded_notes(tmp_path):
     assert 'Title: Example article' in note_text
     assert 'Description: A useful reference' in note_text
     assert '[View on X](https://x.com/i/web/status/123)' in note_text
+
+
+def test_export_story_markdown_fetches_story_content(tmp_path):
+    db_path = tmp_path / "state" / "app.db"
+    vault_dir = tmp_path / "vault"
+    initialize_database(db_path)
+
+    with get_connection(db_path) as connection:
+        insert_bookmark(connection, _bookmark())
+        upsert_url_cache(
+            connection,
+            {
+                "original_url": "https://t.co/example",
+                "resolved_url": "https://example.com/article",
+                "page_title": "Example article",
+                "page_description": "A useful reference",
+                "cached_at": "2026-04-07T09:08:00Z",
+            },
+        )
+
+    fetched_urls: list[str] = []
+
+    def fetcher(url: str) -> str:
+        fetched_urls.append(url)
+        return "Fetched full article body"
+
+    result = export_story_markdown(
+        db_path=db_path,
+        vault_dir=vault_dir,
+        story_content_fetcher=fetcher,
+    )
+
+    assert result.exported_note_count == 1
+    note_path = result.written_paths[0]
+    assert note_path == vault_dir / "stories" / "2026" / "04" / "useful-bookmark-for-the-vault-123.md"
+
+    note_text = note_path.read_text()
+    assert "## Story content" in note_text
+    assert "```text\nFetched full article body\n```" in note_text
+    assert "## Tweet text" in note_text
+    assert "Useful bookmark for the vault" in note_text
+    assert fetched_urls == ["https://example.com/article"]
+
+
+def test_export_story_markdown_falls_back_to_tweet_text_when_fetch_fails(tmp_path):
+    db_path = tmp_path / "state" / "app.db"
+    vault_dir = tmp_path / "vault"
+    initialize_database(db_path)
+
+    with get_connection(db_path) as connection:
+        insert_bookmark(
+            connection,
+            _bookmark("x-fallback"),
+        )
+
+    def fetcher(url: str) -> str:
+        return ""
+
+    result = export_story_markdown(
+        db_path=db_path,
+        vault_dir=vault_dir,
+        story_content_fetcher=fetcher,
+    )
+
+    assert result.exported_note_count == 1
+    note_text = result.written_paths[0].read_text()
+    assert "story_content_type: \"Tweet text\"" in note_text
+    assert "```text\nUseful bookmark for the vault\n```" in note_text
+
+
+def test_export_story_markdown_ignores_x_error_page_and_falls_back_to_tweet_text(tmp_path):
+    db_path = tmp_path / "state" / "app.db"
+    vault_dir = tmp_path / "vault"
+    initialize_database(db_path)
+
+    with get_connection(db_path) as connection:
+        insert_bookmark(
+            connection,
+            _bookmark("x-error")
+            | {
+                "tweet_id": "x-error",
+                "source_name": "x",
+                "source_type": "x_bookmark",
+                "source_item_id": "x-error",
+                "source_ref": "https://x.com/i/web/status/x-error",
+                "raw_urls": [],
+            },
+        )
+
+    def fetcher(url: str) -> str:
+        return (
+            "Something went wrong, but don’t fret — let’s give it another shot.\n"
+            "Try again\n"
+            "Some privacy related extensions may cause issues on x.com. "
+            "Please disable them and try again."
+        )
+
+    result = export_story_markdown(
+        db_path=db_path,
+        vault_dir=vault_dir,
+        story_content_fetcher=fetcher,
+    )
+
+    assert result.exported_note_count == 1
+    note_text = result.written_paths[0].read_text()
+    assert "story_content_type: \"Tweet text\"" in note_text
+    assert "## Tweet text" in note_text
+    assert "Useful bookmark for the vault" in note_text
+    assert "Something went wrong" not in note_text
+
+
+def test_export_story_markdown_follows_linked_tweet_when_article_exists(tmp_path):
+    db_path = tmp_path / "state" / "app.db"
+    vault_dir = tmp_path / "vault"
+    initialize_database(db_path)
+
+    with get_connection(db_path) as connection:
+        insert_bookmark(
+            connection,
+            _bookmark("111111111111111111")
+            | {
+                "source_name": "x",
+                "source_type": "x_bookmark",
+                "source_item_id": "111111111111111111",
+                "source_ref": "https://x.com/i/web/status/Tm90ZVR3ZWV0OjExMTExMTExMTExMTExMTE=",
+                "text": (
+                    "Quoted post here: https://x.com/i/web/status/2043362828090748928 "
+                    "for the actual article."
+                ),
+                "raw_urls": [],
+            },
+        )
+        upsert_url_cache(
+            connection,
+            {
+                "original_url": "https://t.co/example",
+                "resolved_url": "https://example.com/linked-story",
+                "page_title": "Linked article",
+                "page_description": "A story reference",
+                "cached_at": "2026-04-15T14:00:00Z",
+            },
+        )
+        insert_bookmark(
+            connection,
+            _bookmark("2043362828090748928")
+            | {
+                "source_name": "x",
+                "source_type": "x_bookmark",
+                "source_item_id": "2043362828090748928",
+                "source_ref": "https://x.com/i/web/status/2043362828090748928",
+                "raw_urls": ["https://t.co/example"],
+                "text": "Linked tweet with article link.",
+            },
+        )
+
+    def fetcher(url: str) -> str:
+        if url == "https://example.com/linked-story":
+            return "Linked tweet article body"
+        return ""
+
+    result = export_story_markdown(
+        db_path=db_path,
+        vault_dir=vault_dir,
+        story_content_fetcher=fetcher,
+    )
+
+    assert result.exported_note_count == 2
+    linked_notes = [
+        path.read_text()
+        for path in result.written_paths
+        if "2043362828090748928" in path.name
+    ]
+    assert linked_notes, "expected linked tweet story file to be exported"
+    note_text = linked_notes[0]
+    assert "story_content_type: \"Linked tweet story (2043362828090748928)\"" in note_text
+    assert "```text\nLinked tweet article body\n```" in note_text
 
 
 def test_export_fails_when_database_path_is_missing(tmp_path):
@@ -109,6 +290,10 @@ def test_export_fails_for_legacy_database_schema(tmp_path):
             """
             CREATE TABLE bookmarks (
                 tweet_id TEXT PRIMARY KEY,
+                source_name TEXT,
+                source_type TEXT,
+                source_item_id TEXT,
+                source_ref TEXT,
                 text TEXT NOT NULL,
                 author_username TEXT,
                 author_display_name TEXT,
@@ -150,6 +335,10 @@ def test_export_fails_for_legacy_database_schema(tmp_path):
             """
             INSERT INTO bookmarks (
                 tweet_id,
+                source_name,
+                source_type,
+                source_item_id,
+                source_ref,
                 text,
                 author_username,
                 author_display_name,
@@ -159,10 +348,14 @@ def test_export_fails_for_legacy_database_schema(tmp_path):
                 media_urls,
                 raw_urls,
                 first_seen_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 "123",
+                "x",
+                "x_bookmark",
+                "123",
+                "https://x.com/i/web/status/123",
                 "Legacy database bookmark",
                 "lee",
                 "Lee Harrington",

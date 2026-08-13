@@ -14,6 +14,10 @@ APP_DB_PATH = Path("state/app.db")
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS bookmarks (
     tweet_id TEXT PRIMARY KEY,
+    source_name TEXT,
+    source_type TEXT,
+    source_item_id TEXT,
+    source_ref TEXT,
     text TEXT NOT NULL,
     author_username TEXT,
     author_display_name TEXT,
@@ -47,6 +51,20 @@ CREATE TABLE IF NOT EXISTS url_cache (
     cached_at TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS leadership_metadata (
+    tweet_id TEXT PRIMARY KEY,
+    strategic_relevance TEXT,
+    time_horizon TEXT,
+    organizational_impact TEXT,
+    leadership_question TEXT,
+    model TEXT,
+    prompt_version TEXT,
+    schema_version TEXT,
+    validation_status TEXT,
+    generated_at TIMESTAMP,
+    FOREIGN KEY (tweet_id) REFERENCES bookmarks(tweet_id)
+);
+
 CREATE VIRTUAL TABLE IF NOT EXISTS bookmarks_fts USING fts5(
     tweet_id,
     text,
@@ -73,10 +91,29 @@ CREATE TRIGGER IF NOT EXISTS bookmarks_au AFTER UPDATE ON bookmarks BEGIN
 END;
 """
 
+BOOKMARK_COLUMNS = {
+    "source_name": "TEXT",
+    "source_type": "TEXT",
+    "source_item_id": "TEXT",
+    "source_ref": "TEXT",
+}
+
 ENRICHMENT_COLUMNS = {
     "prompt_version": "TEXT",
     "schema_version": "TEXT",
     "validation_status": "TEXT",
+}
+
+LEADERSHIP_METADATA_COLUMNS = {
+    "strategic_relevance": "TEXT",
+    "time_horizon": "TEXT",
+    "organizational_impact": "TEXT",
+    "leadership_question": "TEXT",
+    "model": "TEXT",
+    "prompt_version": "TEXT",
+    "schema_version": "TEXT",
+    "validation_status": "TEXT",
+    "generated_at": "TIMESTAMP",
 }
 
 
@@ -94,7 +131,10 @@ def initialize_database(db_path: Path | str = APP_DB_PATH) -> Path:
     resolved_path = Path(db_path)
     with get_connection(resolved_path) as connection:
         connection.executescript(SCHEMA)
+        _migrate_bookmarks_table(connection)
         _migrate_enrichments_table(connection)
+        _migrate_leadership_metadata_table(connection)
+        _ensure_bookmark_indexes(connection)
         connection.commit()
     return resolved_path
 
@@ -104,8 +144,15 @@ def insert_bookmark(
     bookmark: Mapping[str, Any],
 ) -> bool:
     """Insert a bookmark record, ignoring duplicates by tweet ID."""
+    source_name = str(bookmark.get("source_name") or "x")
+    source_type = str(bookmark.get("source_type") or "x_bookmark")
+    source_item_id = str(bookmark.get("source_item_id") or bookmark["tweet_id"])
     payload = {
         "tweet_id": bookmark["tweet_id"],
+        "source_name": source_name,
+        "source_type": source_type,
+        "source_item_id": source_item_id,
+        "source_ref": bookmark.get("source_ref") or _default_source_ref(source_name, bookmark["tweet_id"]),
         "text": bookmark["text"],
         "author_username": bookmark.get("author_username"),
         "author_display_name": bookmark.get("author_display_name"),
@@ -120,6 +167,10 @@ def insert_bookmark(
         """
         INSERT OR IGNORE INTO bookmarks (
             tweet_id,
+            source_name,
+            source_type,
+            source_item_id,
+            source_ref,
             text,
             author_username,
             author_display_name,
@@ -131,6 +182,10 @@ def insert_bookmark(
             first_seen_at
         ) VALUES (
             :tweet_id,
+            :source_name,
+            :source_type,
+            :source_item_id,
+            :source_ref,
             :text,
             :author_username,
             :author_display_name,
@@ -250,6 +305,64 @@ def get_url_cache_entry(
     ).fetchone()
 
 
+def upsert_leadership_metadata(
+    connection: sqlite3.Connection,
+    metadata_row: Mapping[str, Any],
+) -> None:
+    """Store one current leadership metadata row per tweet ID."""
+    payload = {
+        "tweet_id": metadata_row["tweet_id"],
+        "strategic_relevance": metadata_row.get("strategic_relevance"),
+        "time_horizon": metadata_row.get("time_horizon"),
+        "organizational_impact": metadata_row.get("organizational_impact"),
+        "leadership_question": metadata_row.get("leadership_question"),
+        "model": metadata_row.get("model"),
+        "prompt_version": metadata_row.get("prompt_version"),
+        "schema_version": metadata_row.get("schema_version"),
+        "validation_status": metadata_row.get("validation_status"),
+        "generated_at": metadata_row.get("generated_at"),
+    }
+    connection.execute(
+        """
+        INSERT INTO leadership_metadata (
+            tweet_id,
+            strategic_relevance,
+            time_horizon,
+            organizational_impact,
+            leadership_question,
+            model,
+            prompt_version,
+            schema_version,
+            validation_status,
+            generated_at
+        ) VALUES (
+            :tweet_id,
+            :strategic_relevance,
+            :time_horizon,
+            :organizational_impact,
+            :leadership_question,
+            :model,
+            :prompt_version,
+            :schema_version,
+            :validation_status,
+            :generated_at
+        )
+        ON CONFLICT(tweet_id) DO UPDATE SET
+            strategic_relevance = excluded.strategic_relevance,
+            time_horizon = excluded.time_horizon,
+            organizational_impact = excluded.organizational_impact,
+            leadership_question = excluded.leadership_question,
+            model = excluded.model,
+            prompt_version = excluded.prompt_version,
+            schema_version = excluded.schema_version,
+            validation_status = excluded.validation_status,
+            generated_at = excluded.generated_at
+        """,
+        payload,
+    )
+    connection.commit()
+
+
 def list_unenriched_bookmarks(
     connection: sqlite3.Connection,
 ) -> list[sqlite3.Row]:
@@ -265,6 +378,28 @@ def list_unenriched_bookmarks(
     ).fetchall()
 
 
+def _migrate_bookmarks_table(connection: sqlite3.Connection) -> None:
+    existing_columns = {row[1] for row in connection.execute("PRAGMA table_info(bookmarks)")}
+    for column, column_type in BOOKMARK_COLUMNS.items():
+        if column not in existing_columns:
+            connection.execute(
+                f"ALTER TABLE bookmarks ADD COLUMN {column} {column_type}"
+            )
+
+    connection.execute(
+        "UPDATE bookmarks SET source_name = 'x' WHERE source_name IS NULL OR source_name = ''"
+    )
+    connection.execute(
+        "UPDATE bookmarks SET source_type = 'x_bookmark' WHERE source_type IS NULL OR source_type = ''"
+    )
+    connection.execute(
+        "UPDATE bookmarks SET source_item_id = tweet_id WHERE source_item_id IS NULL OR source_item_id = ''"
+    )
+    connection.execute(
+        "UPDATE bookmarks SET source_ref = 'https://x.com/i/web/status/' || tweet_id WHERE (source_ref IS NULL OR source_ref = '') AND source_name = 'x' AND tweet_id IS NOT NULL"
+    )
+
+
 def _migrate_enrichments_table(connection: sqlite3.Connection) -> None:
     existing_columns = {
         row[1] for row in connection.execute("PRAGMA table_info(enrichments)")
@@ -274,6 +409,49 @@ def _migrate_enrichments_table(connection: sqlite3.Connection) -> None:
             connection.execute(
                 f"ALTER TABLE enrichments ADD COLUMN {column} {column_type}"
             )
+
+
+def _migrate_leadership_metadata_table(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS leadership_metadata (
+            tweet_id TEXT PRIMARY KEY,
+            strategic_relevance TEXT,
+            time_horizon TEXT,
+            organizational_impact TEXT,
+            leadership_question TEXT,
+            model TEXT,
+            prompt_version TEXT,
+            schema_version TEXT,
+            validation_status TEXT,
+            generated_at TIMESTAMP,
+            FOREIGN KEY (tweet_id) REFERENCES bookmarks(tweet_id)
+        )
+        """
+    )
+    existing_columns = {
+        row[1] for row in connection.execute("PRAGMA table_info(leadership_metadata)")
+    }
+    for column, column_type in LEADERSHIP_METADATA_COLUMNS.items():
+        if column not in existing_columns:
+            connection.execute(
+                f"ALTER TABLE leadership_metadata ADD COLUMN {column} {column_type}"
+            )
+
+
+def _ensure_bookmark_indexes(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_bookmarks_source_identity
+        ON bookmarks(source_name, source_type, source_item_id)
+        """
+    )
+
+
+def _default_source_ref(source_name: str, tweet_id: Any) -> str | None:
+    if source_name == "x" and tweet_id not in (None, ""):
+        return f"https://x.com/i/web/status/{tweet_id}"
+    return None
 
 
 def _to_json(value: Any) -> str:

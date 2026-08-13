@@ -4,7 +4,7 @@
 
 **Name:** leeKnowledge
 **Type:** Personal bookmark-to-knowledge pipeline — local-first, single-user
-**Purpose:** Extract X/Twitter bookmarks, enrich them with LLM-generated summaries and tags, and produce a durable Markdown knowledge base that works in Obsidian or any text editor.
+**Purpose:** Extract X/Twitter bookmarks, import a small bounded set of other saved-source artifacts, enrich them with LLM-generated summaries and tags, and produce a durable Markdown knowledge base that works in Obsidian or any text editor.
 
 ---
 
@@ -29,8 +29,10 @@ The hardest part is **reliable extraction**. Everything else is downstream.
 3. Normalize into SQLite with dedup by tweet ID so reruns are safe.
 4. Enrich each bookmark with LLM-generated summary and tags via lee-llm-router (pi harness, ChatGPT subscription).
 5. Render each bookmark as a Markdown note with YAML frontmatter.
-6. Support rerunning: re-extract everything, dedup downstream, only enrich new items.
-7. Keep it local, simple, and maintainable by one person.
+6. Add bounded non-X intake for direct URLs, Safari bookmark exports/folders, and deep-research artifacts without breaking the shipped X workflow.
+7. Preserve one explicit source-identity contract across all intake paths so reruns, dedupe, and downstream notes stay stable.
+8. Support rerunning: re-extract everything, dedup downstream, only enrich new items.
+9. Keep it local, simple, and maintainable by one person.
 
 ---
 
@@ -107,11 +109,23 @@ Run `python -m leeknowledge enrich` to re-run LLM enrichment against existing SQ
 - F18: Organize vault by `vault/YYYY/MM/<slug>-<tweet_id>.md`.
 - F19: Support full re-export from SQLite without re-extracting.
 
+### Universal Source Intake
+- F20: Preserve the existing X extraction contract and map X rows to `source_name=x`, `source_type=x_bookmark`, `source_item_id=<tweet_id>`, while keeping `tweet_id` as the legacy compatibility key.
+- F21: Support `import-url` for one explicit URL per input item with deterministic identity from the canonicalized absolute URL.
+- F22: Support `import-safari-folder` for one Safari bookmark item per parsed export record with deterministic identity from folder lineage plus canonicalized bookmark URL.
+- F23: Support `import-research` for one accepted item inside a Markdown, JSON, JSONL, or CSV research artifact with deterministic identity from artifact identity plus a stable per-record locator.
+- F24: Every non-X normalized row must carry `source_name`, `source_type`, `source_item_id`, and `source_ref`; downstream compatibility uses `canonical_item_id = tweet_id` for X rows and `<source_name>:<source_type>:<source_item_id>` otherwise.
+- F25: Raw import artifacts must be written before normalization, and malformed per-record inputs must be quarantined with explicit reasons and record locators instead of guessed into canonical rows.
+- F26: Existing export and derived stages must remain backward compatible: X note paths and X backlinks stay unchanged, while mixed-source rows flow through enrichment, export, topics, metadata, synthesis, and collections through shared canonical-row semantics rather than per-command branching.
+
 ### CLI
-- F20: `extract` — run Playwright extraction only.
-- F21: `enrich` — run LLM enrichment on un-enriched bookmarks only.
-- F22: `export` — regenerate all Markdown from SQLite.
-- F23: `sync` — run extract + enrich + export in sequence.
+- F27: `extract` — run Playwright extraction only.
+- F28: `import-url` — import one or more explicit URLs into the shared normalization path.
+- F29: `import-safari-folder` — import Safari bookmark export/folder artifacts into the shared normalization path.
+- F30: `import-research` — import deep-research artifacts into the shared normalization path.
+- F31: `enrich` — run LLM enrichment on un-enriched bookmarks only.
+- F32: `export` — regenerate all Markdown from SQLite.
+- F33: `sync` — run extract + enrich + export in sequence for the existing X path; non-X imports remain explicit commands.
 
 ---
 

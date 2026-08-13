@@ -1,0 +1,30 @@
+{
+  "current_attempt_number": 1,
+  "current_step_id": "reconcile_sprint_10_baseline",
+  "current_step_index": 1,
+  "last_updated_at": "2026-04-08T19:54:07.601467Z",
+  "operational_paths": [
+    "artifacts",
+    ".agent-orch-scratch",
+    "src/leeknowledge.egg-info",
+    "state",
+    "vault",
+    ".venv",
+    "backlog",
+    "data",
+    "tmp"
+  ],
+  "playbook_id": "leeknowledge_sprint_10_source_ingestion",
+  "resume": null,
+  "run_id": "868921a22d09",
+  "started_at": "2026-04-08T19:54:07.600752Z",
+  "status": "RUNNING",
+  "step_results": [
+    {
+      "attempts": [],
+      "status": "RUNNING",
+      "step_id": "reconcile_sprint_10_baseline"
+    }
+  ],
+  "workspace_dir": "/Users/lee/projects/leeKnowledge"
+}

@@ -1,0 +1,10 @@
+{
+  "version": "0.1.0",
+  "captured_at": "2026-04-08T19:45:49Z",
+  "source": {
+    "bookmarks_url": "https://x.com/i/bookmarks",
+    "chrome_profile_dir": "/Users/lee/projects/leeKnowledge/pytest-of-lee/pytest-0/test_extract_bookmarks_with_em1/chrome",
+    "headless": false
+  },
+  "bookmark_payloads": []
+}

@@ -1,5 +1,9 @@
 ---
 tweet_id: {{ tweet_id | yaml_scalar }}
+source_name: {{ source_name | yaml_scalar }}
+source_type: {{ source_type | yaml_scalar }}
+source_item_id: {{ source_item_id | yaml_scalar }}
+source_ref: {{ source_ref | yaml_scalar }}
 author_username: {{ author_username | yaml_scalar }}
 author_display_name: {{ author_display_name | yaml_scalar }}
 created_at: {{ created_at | yaml_scalar }}
@@ -72,4 +76,6 @@ enriched_at: {{ enriched_at | yaml_scalar }}
 {% endif %}
 
 ## Source
-- [View on X]({{ source_url }})
+{% if source_url and source_label %}- [{{ source_label }}]({{ source_url }})
+{% else %}- None
+{% endif %}

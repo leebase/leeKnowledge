@@ -20,3 +20,11 @@ state/*.db
 
 vault/*
 !vault/.gitkeep
+*.db
+*.sqlite
+*.sqlite3
+*.log
+.DS_Store
+nohup.out
+._*
+*.sync-conflict-*

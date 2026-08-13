@@ -1,0 +1,12 @@
+{
+  "imported_at": "2026-04-08T19:45:49Z",
+  "adapter": "import-url",
+  "source": {
+    "url_count": 1
+  },
+  "items": [
+    {
+      "url": "HTTPS://Example.com/path?b=2&a=1#frag"
+    }
+  ]
+}

@@ -1,0 +1,330 @@
+{
+  "default_routing": {
+    "fallback": {
+      "harness": "pi_cli",
+      "model": "gpt-5.4"
+    },
+    "primary": {
+      "harness": "pi_cli",
+      "model": "gpt-5.4-mini"
+    }
+  },
+  "default_token_exhaustion_fallback": null,
+  "operational_paths": [
+    "artifacts",
+    ".agent-orch-scratch",
+    "src/leeknowledge.egg-info",
+    "state",
+    "vault",
+    ".venv",
+    "backlog",
+    "data"
+  ],
+  "playbook_id": "leeknowledge_sprint_10_source_ingestion",
+  "source_path": "playbooks/sprint-10-source-ingestion.yaml",
+  "steps": [
+    {
+      "allowed_paths": [
+        "AGENTS.md",
+        "context.md",
+        "project-plan.md",
+        "product-definition.md",
+        "architecture.md",
+        "sprint-plan.md",
+        "backlog/candidates"
+      ],
+      "execution": {
+        "capabilities_required": [
+          "repo_edit"
+        ],
+        "routing_hints": {},
+        "task_type": "planning_task"
+      },
+      "name": "Reconcile Sprint 10 baseline",
+      "outputs": {
+        "required": []
+      },
+      "retry_policy": {
+        "max_attempts": 3
+      },
+      "routing": {
+        "fallback": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4"
+        },
+        "primary": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4-mini"
+        }
+      },
+      "step_id": "reconcile_sprint_10_baseline",
+      "token_exhaustion_fallback": null,
+      "worker": "router"
+    },
+    {
+      "allowed_paths": [
+        "product-definition.md",
+        "architecture.md",
+        "sprint-plan.md",
+        "backlog/candidates/BI-001-universal-sources-ingestion.md",
+        "playbooks"
+      ],
+      "execution": {
+        "capabilities_required": [
+          "repo_edit"
+        ],
+        "routing_hints": {},
+        "task_type": "planning_task"
+      },
+      "name": "Define Sprint 10 source ingestion contract",
+      "outputs": {
+        "required": []
+      },
+      "retry_policy": {
+        "max_attempts": 3
+      },
+      "routing": {
+        "fallback": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4"
+        },
+        "primary": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4-mini"
+        }
+      },
+      "step_id": "define_sprint_10_source_ingestion",
+      "token_exhaustion_fallback": null,
+      "worker": "router"
+    },
+    {
+      "allowed_paths": [
+        "sprint-plan.md",
+        "architecture.md",
+        "product-definition.md",
+        "using-leeKnowledge.md",
+        "playbooks"
+      ],
+      "execution": {
+        "capabilities_required": [
+          "repo_edit"
+        ],
+        "routing_hints": {},
+        "task_type": "planning_task"
+      },
+      "name": "Plan the Sprint 10 implementation sequence",
+      "outputs": {
+        "required": []
+      },
+      "retry_policy": {
+        "max_attempts": 3
+      },
+      "routing": {
+        "fallback": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4"
+        },
+        "primary": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4-mini"
+        }
+      },
+      "step_id": "plan_sprint_10_source_ingestion",
+      "token_exhaustion_fallback": null,
+      "worker": "router"
+    },
+    {
+      "allowed_paths": [
+        "src",
+        "tests",
+        "backlog",
+        "architecture.md",
+        "product-definition.md",
+        "sprint-plan.md"
+      ],
+      "execution": {
+        "capabilities_required": [
+          "repo_edit"
+        ],
+        "routing_hints": {},
+        "task_type": "coding_task"
+      },
+      "name": "Implement universal source intake",
+      "outputs": {
+        "required": []
+      },
+      "retry_policy": {
+        "max_attempts": 3
+      },
+      "routing": {
+        "fallback": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4"
+        },
+        "primary": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4-mini"
+        }
+      },
+      "step_id": "implement_sprint_10_source_ingestion",
+      "token_exhaustion_fallback": null,
+      "worker": "router"
+    },
+    {
+      "allowed_paths": [
+        "architecture.md",
+        "product-definition.md",
+        "using-leeKnowledge.md",
+        "README.md",
+        "whats-next.md",
+        "result-review.md",
+        "sprint-plan.md",
+        "project-plan.md",
+        "playbooks"
+      ],
+      "execution": {
+        "capabilities_required": [
+          "repo_edit"
+        ],
+        "routing_hints": {},
+        "task_type": "documentation_task"
+      },
+      "name": "Document source-intake usage",
+      "outputs": {
+        "required": []
+      },
+      "retry_policy": {
+        "max_attempts": 3
+      },
+      "routing": {
+        "fallback": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4"
+        },
+        "primary": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4-mini"
+        }
+      },
+      "step_id": "document_sprint_10_source_ingestion",
+      "token_exhaustion_fallback": null,
+      "worker": "router"
+    },
+    {
+      "allowed_paths": [
+        "src",
+        "tests",
+        "state",
+        "data",
+        "vault",
+        "backlog",
+        "playbooks"
+      ],
+      "execution": {
+        "capabilities_required": [
+          "repo_edit"
+        ],
+        "routing_hints": {},
+        "task_type": "testing_task"
+      },
+      "name": "Repair and verify Sprint 10 source intake slice",
+      "outputs": {
+        "required": []
+      },
+      "retry_policy": {
+        "max_attempts": 3
+      },
+      "routing": {
+        "fallback": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4"
+        },
+        "primary": {
+          "harness": "pi_cli",
+          "model": "gpt-5.3-codex"
+        }
+      },
+      "step_id": "repair_verify_sprint_10_source_ingestion",
+      "token_exhaustion_fallback": null,
+      "worker": "router"
+    },
+    {
+      "allowed_paths": [
+        "code-reviews",
+        "src",
+        "tests",
+        "playbooks"
+      ],
+      "execution": {
+        "capabilities_required": [
+          "repo_edit"
+        ],
+        "routing_hints": {},
+        "task_type": "review_task"
+      },
+      "name": "Review Sprint 10 source intake slice",
+      "outputs": {
+        "required": [
+          {
+            "path": "code-reviews/sprint-10-source-ingestion-review.md",
+            "type": "markdown"
+          }
+        ]
+      },
+      "retry_policy": {
+        "max_attempts": 3
+      },
+      "routing": {
+        "fallback": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4-mini"
+        },
+        "primary": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4"
+        }
+      },
+      "step_id": "review_sprint_10_source_ingestion",
+      "token_exhaustion_fallback": null,
+      "worker": "router"
+    },
+    {
+      "allowed_paths": [
+        "context.md",
+        "WHERE_AM_I.md",
+        "result-review.md",
+        "sprint-plan.md",
+        "architecture.md",
+        "project-plan.md",
+        "playbooks"
+      ],
+      "execution": {
+        "capabilities_required": [
+          "repo_edit"
+        ],
+        "routing_hints": {},
+        "task_type": "documentation_task"
+      },
+      "name": "Close out Sprint 10 docs and handoff",
+      "outputs": {
+        "required": []
+      },
+      "retry_policy": {
+        "max_attempts": 3
+      },
+      "routing": {
+        "fallback": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4"
+        },
+        "primary": {
+          "harness": "pi_cli",
+          "model": "gpt-5.4-mini"
+        }
+      },
+      "step_id": "closeout_sprint_10_source_ingestion",
+      "token_exhaustion_fallback": null,
+      "worker": "router"
+    }
+  ]
+}
